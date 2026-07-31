@@ -1,0 +1,174 @@
+---
+// Contact (spec §5.9) — the closing section. Centred editorial layout,
+// generous vertical padding, mailto primary, LinkedIn/GitHub secondary.
+// No phone number anywhere (spec §10.4 — data minimisation, practised).
+import { SITE } from '../consts';
+import type { Locale } from '../i18n';
+import { t } from '../i18n/contact';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const s = t[locale];
+---
+
+<section id="contact" class="section contact" aria-labelledby="contact-heading">
+  <div class="container">
+    <div class="contact__inner">
+      <div class="section-header contact__header" data-reveal>
+        <span class="eyebrow">{s.eyebrow}</span>
+        <h2 id="contact-heading" class="contact__heading">{s.heading}</h2>
+      </div>
+
+      <p class="contact__line" data-reveal>{s.line}</p>
+
+      <div class="contact__actions" data-reveal>
+        <a class="btn btn--primary" href={`mailto:${SITE.email}`}>{s.emailCta}</a>
+        <a
+          class="btn btn--secondary"
+          href={SITE.linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {s.linkedinLabel}
+          <svg
+            class="contact__ext"
+            aria-hidden="true"
+            focusable="false"
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4.75 11.25 11.25 4.75M5.75 4.75h5.5v5.5"></path>
+          </svg>
+          <span class="sr-only">{s.newTabSr}</span>
+        </a>
+        <a class="btn btn--secondary" href={SITE.github} target="_blank" rel="noopener noreferrer">
+          {s.githubLabel}
+          <svg
+            class="contact__ext"
+            aria-hidden="true"
+            focusable="false"
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4.75 11.25 11.25 4.75M5.75 4.75h5.5v5.5"></path>
+          </svg>
+          <span class="sr-only">{s.newTabSr}</span>
+        </a>
+      </div>
+
+      <div class="contact__status" data-reveal>
+        <hr class="rule" />
+        <p class="contact__status-line">
+          <span class="contact__dot" aria-hidden="true"></span>
+          {s.statusLine}
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* The closer breathes more than any other section. */
+  .contact {
+    padding-block: calc(var(--section-pad) * 1.25);
+  }
+
+  .contact__inner {
+    max-width: 760px;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .contact__header {
+    margin-bottom: var(--space-5);
+  }
+
+  .contact__heading {
+    font-size: clamp(2.4rem, 5vw, 4rem);
+  }
+
+  .contact__line {
+    max-width: 44ch;
+    margin-inline: auto;
+    color: var(--text-lo);
+  }
+
+  .contact__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+    margin-top: var(--space-7);
+  }
+
+  .contact__ext {
+    flex: none;
+  }
+
+  /* Quiet mono flourish above the footer */
+  .contact__status {
+    margin-top: clamp(var(--space-8), 12vw, var(--space-10));
+  }
+
+  .contact__status-line {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-lo);
+  }
+
+  .contact__dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-chip);
+    background: var(--verified);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* Opacity-only pulse, 2.4s loop (spec §8.1 — transform/opacity only) */
+    .contact__dot {
+      animation: contact-pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes contact-pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.35;
+      }
+    }
+
+    /* Gentle entry stagger behind the header */
+    :global(html.js) .contact__actions[data-reveal] {
+      transition-delay: 90ms;
+    }
+
+    :global(html.js) .contact__status[data-reveal] {
+      transition-delay: 180ms;
+    }
+  }
+</style>

@@ -1,0 +1,89 @@
+---
+// Skills, "The catalogue" (spec §5.7). Six domains, tools verbatim.
+// Banned by spec: percentage bars, star ratings, radar charts.
+// Rows (keys and chips) live per-locale in src/i18n/skills.ts.
+import type { Locale } from '../i18n';
+import { t } from '../i18n/skills';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const { eyebrow, heading, catalogue } = t[locale];
+---
+
+<section id="skills" class="section" aria-labelledby="skills-heading">
+  <div class="container">
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">{eyebrow}</p>
+      <h2 id="skills-heading">{heading}</h2>
+    </header>
+
+    <dl class="catalogue">
+      {
+        catalogue.map((row) => (
+          <div class="catalogue__row" data-reveal>
+            <dt class="mono catalogue__key">
+              <span class="catalogue__tick" aria-hidden="true">`</span>{row.key}<span
+                class="catalogue__tick"
+                aria-hidden="true"
+              >`</span>
+            </dt>
+            <dd class="catalogue__tools">
+              <ul role="list">
+                {row.tools.map((tool) => (
+                  <li class="chip">{tool}</li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
+
+<style>
+  /* Ruled like a ledger: hairline between every row, closed at the foot. */
+  .catalogue {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .catalogue__row {
+    display: grid;
+    grid-template-columns: 1fr;
+    column-gap: var(--space-5);
+    row-gap: var(--space-3);
+    align-items: start;
+    border-top: 1px solid var(--line);
+    padding-block: var(--space-5);
+  }
+
+  @media (min-width: 720px) {
+    .catalogue__row {
+      grid-template-columns: 220px 1fr;
+    }
+  }
+
+  /* Domain key: backtick-styled catalogue key in the data face. */
+  .catalogue__key {
+    color: var(--verified);
+    text-transform: lowercase;
+    /* Optical alignment with the first line of chips (4px pad + 1px border). */
+    padding-top: 5px;
+  }
+
+  .catalogue__tick {
+    color: var(--text-lo);
+    opacity: 0.7;
+  }
+
+  .catalogue__tools ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+  }
+</style>

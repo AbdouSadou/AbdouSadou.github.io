@@ -1,0 +1,742 @@
+---
+// Hero — "The Golden Record" signature moment (spec §5.1, §7.5, §8.2).
+// Server-renders the RESOLVED state: record card verified, copy visible,
+// lineage lines dimmed to 20%. The inline script below opts into the
+// animation (adds .will-animate) only when motion is allowed and the
+// sequence has not yet played this session; the bundled module then runs
+// the GSAP timeline from the .will-animate initial state back to resolved.
+// All user-visible strings live in src/i18n/hero.ts; the conflict-flicker
+// candidate lists are server-rendered into data-conflict-values so the one
+// bundled script serves both locales.
+import { SITE } from '../consts';
+import type { Locale } from '../i18n';
+import { t } from '../i18n/hero';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const strings = t[locale];
+const cvHref = locale === 'fr' ? SITE.cvPathFr : SITE.cvPath;
+---
+
+<section id="hero" class="hero">
+  <div class="container hero__inner">
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <p class="eyebrow">{strings.eyebrow}</p>
+        <h1>{strings.h1}</h1>
+        <p class="hero__sub">{strings.sub}</p>
+        <div class="hero__ctas">
+          <a class="btn btn--primary" href="#work">{strings.ctaWork}</a>
+          <a class="btn btn--secondary" href={cvHref} download>
+            {strings.ctaCv}
+            <span class="btn__sub">{strings.ctaCvSub}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero__stage">
+        <!-- Lineage traces: ambient at 20% in the resolved state (spec §8.2) -->
+        <svg
+          class="hero__lineage"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M2 8 C 22 18, 38 34, 50 50" pathLength="1"></path>
+          <path d="M88 6 C 72 18, 60 34, 50 50" pathLength="1"></path>
+          <path d="M0 44 C 18 46, 34 48, 50 50" pathLength="1"></path>
+          <path d="M10 90 C 26 78, 38 64, 50 50" pathLength="1"></path>
+          <path d="M96 94 C 78 80, 62 64, 50 50" pathLength="1"></path>
+          <path d="M98 60 C 80 57, 64 53, 50 50" pathLength="1"></path>
+        </svg>
+
+        <!-- Dirty duplicates: decorative, hidden unless the sequence runs -->
+        {
+          strings.dupes.map((lines, i) => (
+            <div class={`dupe dupe--${i + 1}`} aria-hidden="true">
+              {lines.map((line) =>
+                typeof line === 'string' ? (
+                  <span>{line}</span>
+                ) : (
+                  <span>{line.pre}<em class="dupe__null">NULL</em></span>
+                )
+              )}
+            </div>
+          ))
+        }
+
+        <!-- The golden record: real content, resolved by default -->
+        <div class="record">
+          <span class="record__glow" aria-hidden="true"></span>
+          <div class="record__head">
+            <span class="record__key">{strings.recordHead}</span>
+            <span class="record__head-icons">
+              <svg
+                class="record__replay-icon"
+                viewBox="0 0 20 20"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  d="M16.5 10a6.5 6.5 0 1 1-2.2-4.9M16.5 2.8v3.4h-3.4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+              <svg
+                class="record__tick"
+                viewBox="0 0 20 20"
+                width="20"
+                height="20"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle class="tick-draw" cx="10" cy="10" r="8.5" pathLength="1"></circle>
+                <path class="tick-draw" d="M6.2 10.4l2.5 2.5 5.1-5.4" pathLength="1"></path>
+              </svg>
+            </span>
+          </div>
+          <dl class="record__fields">
+            <div
+              class="record__row"
+              data-field="role"
+              data-conflict
+              data-conflict-values={JSON.stringify(strings.conflicts.role)}
+            >
+              <dt>{strings.record.roleKey}</dt>
+              <dd>
+                <span class="record__value">{strings.record.roleValue}</span>
+                <span class="record__ghost" aria-hidden="true"></span>
+              </dd>
+            </div>
+            <div
+              class="record__row"
+              data-field="location"
+              data-conflict
+              data-conflict-values={JSON.stringify(strings.conflicts.location)}
+            >
+              <dt>{strings.record.locationKey}</dt>
+              <dd>
+                <span class="record__value">{strings.record.locationValue}</span>
+                <span class="record__ghost" aria-hidden="true"></span>
+              </dd>
+            </div>
+            <div class="record__row" data-field="specialisms">
+              <dt>{strings.record.specialismsKey}</dt>
+              <dd><span class="record__value">{strings.record.specialismsValue}</span></dd>
+            </div>
+            <div
+              class="record__row"
+              data-field="status"
+              data-conflict
+              data-conflict-values={JSON.stringify(strings.conflicts.status)}
+            >
+              <dt>{strings.record.statusKey}</dt>
+              <dd>
+                <span class="record__value">{strings.record.statusValue}</span>
+                <span class="record__ghost" aria-hidden="true"></span>
+              </dd>
+            </div>
+          </dl>
+          <!-- Invisible full-card trigger: clicking the record replays the
+               deduplication sequence (user-initiated, so reduced-motion safe) -->
+          <button class="record__replay" type="button" data-replay>
+            <span class="sr-only">{strings.replayLabel}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero__cue" aria-hidden="true">
+    <span class="hero__cue-label">{strings.cueLabel}</span>
+    <span class="hero__cue-line"></span>
+  </div>
+
+  <script is:inline>
+    // Pre-paint gate: opt into the load sequence only when motion is allowed
+    // and it has not played this session. Without .will-animate, nothing is
+    // ever hidden; no-JS, reduced-motion and repeat visits get the resolved
+    // state with zero flash.
+    try {
+      if (
+        !sessionStorage.getItem('gr-played') &&
+        window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+      ) {
+        var grHero = document.currentScript && document.currentScript.closest('section');
+        if (grHero) {
+          grHero.classList.add('will-animate');
+          // Failsafe: if the bundled module never executes (chunk blocked or
+          // failed), never leave the hero hidden; fall back to resolved.
+          setTimeout(function () {
+            if (!grHero.hasAttribute('data-gr-live')) grHero.classList.remove('will-animate');
+          }, 4000);
+        }
+      }
+    } catch (e) {
+      /* storage or matchMedia unavailable; stay resolved */
+    }
+  </script>
+</section>
+
+<script>
+  import gsap from 'gsap';
+
+  const hero = document.getElementById('hero');
+  let playing = false;
+
+  if (hero) {
+    hero.setAttribute('data-gr-live', ''); // cancels the inline failsafe
+    // Scroll cue dismissal — wired regardless of whether the sequence runs.
+    window.addEventListener('scroll', () => hero.classList.add('hero--scrolled'), {
+      once: true,
+      passive: true,
+    });
+
+    if (hero.classList.contains('will-animate')) {
+      safePlay(hero);
+    }
+
+    // Replay: clicking the record card re-runs the sequence. User-initiated,
+    // so it plays regardless of the once-per-session flag or motion setting.
+    const replayBtn = hero.querySelector<HTMLButtonElement>('[data-replay]');
+    replayBtn?.addEventListener('click', () => {
+      if (playing) return;
+      hero.classList.add('will-animate'); // restore frame zero via CSS
+      safePlay(hero);
+    });
+  }
+
+  function safePlay(root: HTMLElement): void {
+    try {
+      play(root);
+    } catch {
+      // Never leave content hidden if anything goes wrong.
+      playing = false;
+      root.classList.remove('will-animate');
+    }
+  }
+
+  function play(root: HTMLElement): void {
+    playing = true;
+    try {
+      sessionStorage.setItem('gr-played', '1');
+    } catch {
+      /* private mode — the sequence simply replays next visit */
+    }
+
+    const record = root.querySelector<HTMLElement>('.record');
+    const glow = root.querySelector<HTMLElement>('.record__glow');
+    const lineage = root.querySelector<SVGSVGElement>('.hero__lineage');
+    const cue = root.querySelector<HTMLElement>('.hero__cue');
+    const copyEls = Array.from(root.querySelectorAll<HTMLElement>('.hero__copy > *'));
+    const dupes = Array.from(root.querySelectorAll<HTMLElement>('.dupe'));
+    const lineagePaths = lineage ? Array.from(lineage.querySelectorAll('path')) : [];
+    const tickStrokes = Array.from(root.querySelectorAll<SVGElement>('.record__tick .tick-draw'));
+
+    if (!record || copyEls.length === 0) {
+      root.classList.remove('will-animate');
+      return;
+    }
+
+    // GSAP core cannot parse CSS cubic-bezier strings; power3.out is the
+    // closest built-in to the site's --ease-out curve (0.22, 1, 0.36, 1).
+    const EASE = 'power3.out';
+
+    const detachSkip = (): void => {
+      window.removeEventListener('scroll', skip);
+      window.removeEventListener('pointerdown', skip);
+      window.removeEventListener('keydown', skip);
+    };
+
+    const tl = gsap.timeline({
+      defaults: { ease: EASE },
+      onComplete: () => {
+        playing = false;
+        detachSkip();
+        // The stylesheet's resolved state matches the timeline's end state,
+        // so dropping the class and clearing inline styles causes no flash.
+        root.classList.remove('will-animate');
+        // Dupes included so a replay starts from their untouched CSS scatter
+        // positions instead of the previous run's inline end state.
+        const finals: Element[] = [...copyEls, record, ...tickStrokes, ...dupes];
+        if (glow) finals.push(glow);
+        if (lineage) finals.push(lineage);
+        if (cue) finals.push(cue);
+        gsap.set(finals, { clearProps: 'all' });
+        root.querySelectorAll<HTMLElement>('.record__value').forEach((el) => {
+          el.style.removeProperty('opacity');
+        });
+        root.querySelectorAll<HTMLElement>('.record__ghost').forEach((el) => {
+          el.style.removeProperty('opacity');
+          el.textContent = '';
+        });
+      },
+    });
+
+    // 1 · Duplicates drift and converge on the record's centre (~0.1–1.4s).
+    const recRect = record.getBoundingClientRect();
+    const cx = recRect.left + recRect.width / 2;
+    const cy = recRect.top + recRect.height / 2;
+    dupes.forEach((dupe, i) => {
+      const r = dupe.getBoundingClientRect();
+      tl.to(
+        dupe,
+        {
+          x: cx - (r.left + r.width / 2),
+          y: cy - (r.top + r.height / 2),
+          rotation: 0,
+          scale: 0.4,
+          opacity: 0,
+          duration: 0.95,
+          ease: 'power2.inOut',
+        },
+        0.1 + i * 0.07
+      );
+    });
+
+    // 2 · Lineage lines trace from duplicate origins to the record, then dim.
+    if (lineagePaths.length > 0) {
+      tl.to(
+        lineagePaths,
+        { strokeDashoffset: 0, duration: 0.7, stagger: 0.06, ease: 'power2.out' },
+        0.3
+      );
+      tl.to(lineage, { opacity: 0.2, duration: 0.5 }, 1.5);
+    }
+
+    // 3 · The record fades in and locks: 0.98 → 1, border brightens, tick draws.
+    tl.to(record, { opacity: 1, duration: 0.5 }, 0.85);
+    tl.fromTo(record, { scale: 0.98 }, { scale: 1, duration: 0.5 }, 1.3);
+    if (glow) tl.to(glow, { opacity: 1, duration: 0.4 }, 1.35);
+    if (tickStrokes.length > 0) {
+      tl.to(
+        tickStrokes,
+        { strokeDashoffset: 0, duration: 0.4, stagger: 0.12, ease: 'power2.out' },
+        1.4
+      );
+    }
+
+    // 4 · Conflicting fields flicker between candidate values, then resolve.
+    // Candidate lists are server-rendered per locale into data-conflict-values
+    // (see src/i18n/hero.ts) so this single bundle serves both locales. Parse
+    // defensively: a malformed attribute degrades to no flicker, never a crash.
+    const conflictRows = Array.from(
+      root.querySelectorAll<HTMLElement>('.record__row[data-conflict]')
+    );
+    conflictRows.forEach((row, ci) => {
+      const ghost = row.querySelector<HTMLElement>('.record__ghost');
+      const value = row.querySelector<HTMLElement>('.record__value');
+      if (!ghost || !value) return;
+      let candidates: string[] = [];
+      try {
+        const parsed: unknown = JSON.parse(row.dataset.conflictValues ?? '[]');
+        if (Array.isArray(parsed)) {
+          candidates = parsed.filter((v): v is string => typeof v === 'string');
+        }
+      } catch {
+        candidates = [];
+      }
+      const start = 0.9 + ci * 0.06;
+      candidates.forEach((candidate, vi) => {
+        const at = start + vi * 0.14;
+        tl.call(
+          () => {
+            ghost.textContent = candidate;
+          },
+          undefined,
+          at
+        );
+        tl.fromTo(ghost, { opacity: 0 }, { opacity: 0.9, duration: 0.05, ease: 'none' }, at);
+        tl.to(ghost, { opacity: 0.25, duration: 0.08, ease: 'none' }, at + 0.06);
+      });
+      tl.to(ghost, { opacity: 0, duration: 0.1 }, 1.42);
+      tl.to(value, { opacity: 1, duration: 0.3 }, 1.45);
+    });
+
+    // 5 · Copy, CTAs and cue — the last ~400ms; total ends at 2.2s.
+    tl.to(copyEls, { opacity: 1, y: 0, duration: 0.35, stagger: 0.05 }, 1.7);
+    if (cue) tl.to(cue, { opacity: 1, duration: 0.3 }, 1.85);
+
+    // Skippable at any moment: first scroll, pointer or key jumps to the end.
+    function skip(): void {
+      detachSkip();
+      tl.progress(1);
+    }
+    window.addEventListener('scroll', skip, { passive: true });
+    window.addEventListener('pointerdown', skip);
+    window.addEventListener('keydown', skip);
+  }
+</script>
+
+<style>
+  /* ------------------------------------------------------------------ shell */
+  .hero {
+    position: relative;
+    min-height: calc(100vh - 80px);
+    min-height: calc(100svh - 80px);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding-block: var(--space-8) var(--space-9);
+  }
+
+  /* Hairline graph rulings — --line is 8% alpha, ×0.35 ≈ 2.8% (≤3%, §7.5) */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 72px 72px;
+  }
+
+  .hero__inner {
+    position: relative;
+    width: 100%;
+  }
+
+  .hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  /* ------------------------------------------------------------------- copy */
+  .hero__copy .eyebrow {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
+  .hero__copy h1 {
+    margin-bottom: var(--space-5);
+  }
+
+  .hero__sub {
+    max-width: 56ch;
+    color: var(--text-lo);
+    margin-bottom: var(--space-6);
+  }
+
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  /* ------------------------------------------------------------------ stage */
+  .hero__stage {
+    position: relative;
+    min-height: clamp(380px, 48vh, 520px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero__lineage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.2;
+    pointer-events: none;
+  }
+
+  .hero__lineage path {
+    fill: none;
+    stroke: var(--lineage);
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  /* ----------------------------------------------------------------- record */
+  .record {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 460px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* Brightened border on lock — resolved state has it on */
+  .record__glow {
+    position: absolute;
+    inset: -1px;
+    border: 1px solid color-mix(in srgb, var(--verified) 40%, transparent);
+    border-radius: var(--radius-card);
+    pointer-events: none;
+  }
+
+  .record__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .record__key {
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--text-hi);
+  }
+
+  .record__tick {
+    flex: none;
+    fill: none;
+    stroke: var(--verified);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .record__tick .tick-draw {
+    stroke-dasharray: 1;
+  }
+
+  .record__head-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex: none;
+  }
+
+  /* Replay affordance: circular arrow appears in the head on hover/focus */
+  .record__replay-icon {
+    color: var(--text-lo);
+    opacity: 0;
+    transition: opacity var(--dur-ui) var(--ease-out);
+  }
+
+  .record:hover .record__replay-icon,
+  .record:focus-within .record__replay-icon {
+    opacity: 0.85;
+  }
+
+  /* Invisible full-card replay trigger */
+  .record__replay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-card);
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .record__replay:focus-visible {
+    outline: 2px solid var(--verified);
+    outline-offset: 2px;
+  }
+
+  /* No replay while the sequence itself is running */
+  .hero.will-animate .record__replay {
+    pointer-events: none;
+  }
+
+  .record__fields {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .record__row {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .record__row:last-child {
+    border-bottom: 0;
+  }
+
+  .record__row dt {
+    color: var(--text-lo);
+  }
+
+  .record__row dd {
+    position: relative;
+    margin: 0;
+    color: var(--text-hi);
+  }
+
+  .record__row[data-field='status'] .record__value {
+    color: var(--verified);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+  }
+
+  /* Flicker overlay — empty and invisible unless the sequence drives it */
+  .record__ghost {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    color: var(--review);
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* ------------------------------------------------------------- duplicates */
+  .dupe {
+    position: absolute;
+    z-index: 1;
+    padding: var(--space-2) var(--space-3);
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    border: 1px dashed var(--line-bright);
+    border-radius: calc(var(--radius-card) - 6px);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-lo);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .dupe span {
+    display: block;
+    white-space: nowrap;
+  }
+
+  .dupe__null {
+    font-style: normal;
+    color: var(--review);
+  }
+
+  /* Deterministic scatter — no randomness at render */
+  .dupe--1 { top: 4%; left: -4%; transform: rotate(-4deg); }
+  .dupe--2 { top: 2%; right: 6%; transform: rotate(3deg); }
+  .dupe--3 { top: 40%; left: -10%; transform: rotate(2deg); }
+  .dupe--4 { bottom: 6%; left: 4%; transform: rotate(-2deg); }
+  .dupe--5 { bottom: 0%; right: -4%; transform: rotate(4deg); }
+  .dupe--6 { top: 56%; right: -8%; transform: rotate(-3deg); }
+
+  /* -------------------------------------------------------------- scroll cue */
+  .hero__cue {
+    position: absolute;
+    left: 50%;
+    bottom: var(--space-5);
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    transition: opacity var(--dur-ui) var(--ease-out);
+  }
+
+  .hero__cue-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--text-lo);
+  }
+
+  .hero__cue-line {
+    position: relative;
+    width: 1px;
+    height: 44px;
+    background: var(--line-bright);
+    overflow: hidden;
+  }
+
+  /* The loop only exists when motion is allowed; otherwise a static line */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__cue-line::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--text-lo);
+      transform: translateY(-100%);
+      animation: hero-cue-slide 2.2s var(--ease-out) infinite;
+    }
+  }
+
+  @keyframes hero-cue-slide {
+    0% { transform: translateY(-100%); }
+    65% { transform: translateY(100%); }
+    100% { transform: translateY(100%); }
+  }
+
+  .hero--scrolled .hero__cue {
+    opacity: 0;
+  }
+
+  /* ----------------------------------------------- animation initial state.
+     Applied ONLY when the pre-paint script adds .will-animate (JS present,
+     motion allowed, not yet played this session). Everything here is the
+     timeline's frame zero; GSAP animates back to the resolved state above. */
+  .hero.will-animate .hero__copy > *,
+  .hero.will-animate .record,
+  .hero.will-animate .record__glow,
+  .hero.will-animate .hero__cue {
+    opacity: 0;
+  }
+
+  .hero.will-animate .hero__copy > * {
+    transform: translateY(20px);
+  }
+
+  .hero.will-animate .hero__cue {
+    transition: none; /* keep the CSS transition from fighting the GSAP tween */
+  }
+
+  .hero.will-animate .dupe {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .hero.will-animate .hero__lineage {
+    opacity: 0.7;
+  }
+
+  .hero.will-animate .hero__lineage path,
+  .hero.will-animate .record__tick .tick-draw {
+    stroke-dashoffset: 1;
+  }
+
+  .hero.will-animate .record__row[data-conflict] .record__value {
+    opacity: 0;
+  }
+
+  /* --------------------------------------------------------------- responsive */
+  @media (max-width: 920px) {
+    .hero {
+      padding-block: var(--space-9) var(--space-8);
+    }
+
+    .hero__grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-7);
+    }
+
+    .hero__stage {
+      min-height: 340px;
+    }
+  }
+</style>

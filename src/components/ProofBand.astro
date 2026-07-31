@@ -1,0 +1,160 @@
+---
+// Proof band (spec §5.2) — the four §3 proof points in one quiet ledger row.
+// No icons, no cards; hairline rules above and below. Counters (spec §8.3):
+// final values are server-rendered so no-JS and reduced-motion users see the
+// finished state; JS animates 0 → final once, when the band is half in view.
+// Labels live in src/i18n/proof.ts; the numerals are fixed here (§3).
+import type { Locale } from '../i18n';
+import { t } from '../i18n/proof';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const strings = t[locale];
+
+interface Stat {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+}
+
+const stats: Stat[] = [
+  { value: 5, suffix: '+', label: strings.labels[0] },
+  { value: 15, suffix: '%', label: strings.labels[1] },
+  { value: 4, label: strings.labels[2] },
+  { value: 2, label: strings.labels[3] },
+];
+
+const finalText = (s: Stat) => `${s.prefix ?? ''}${s.value}${s.suffix ?? ''}`;
+---
+
+<section id="proof" class="proof">
+  <div class="container" data-reveal>
+    <h2 class="sr-only">{strings.srHeading}</h2>
+    <div class="rule" aria-hidden="true"></div>
+    <ul class="proof__row" role="list">
+      {
+        stats.map((stat) => (
+          <li class="proof__stat">
+            <span class="proof__num">
+              <span
+                class="proof__count"
+                data-counter
+                data-target={String(stat.value)}
+                data-prefix={stat.prefix ?? ''}
+                data-suffix={stat.suffix ?? ''}
+                aria-hidden="true"
+                style={`min-width: ${finalText(stat).length}ch`}
+              >
+                {finalText(stat)}
+              </span>
+              <span class="sr-only">{finalText(stat)}</span>
+            </span>
+            <span class="proof__label eyebrow">{stat.label}</span>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="rule" aria-hidden="true"></div>
+  </div>
+</section>
+
+<style>
+  .proof {
+    padding-block: clamp(var(--space-7), 8vw, var(--space-9));
+  }
+
+  .proof__row {
+    list-style: none;
+    margin: 0;
+    padding: clamp(var(--space-6), 5vw, var(--space-7)) 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--space-6);
+    row-gap: var(--space-7);
+  }
+
+  .proof__num {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 650;
+    font-size: clamp(2.2rem, 4vw, 3.5rem);
+    letter-spacing: var(--tracking-display);
+    line-height: 1.05;
+    color: var(--text-hi);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* min-width (inline, per stat) reserves the final string length so the
+     count-up never shifts layout — CLS stays at zero (spec §8.3, §10.1). */
+  .proof__count {
+    display: inline-block;
+  }
+
+  .proof__label {
+    display: block;
+    margin-top: var(--space-3);
+    line-height: 1.6;
+    max-width: 28ch;
+  }
+
+  @media (max-width: 719px) {
+    .proof__row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--space-5);
+    }
+  }
+</style>
+
+<script>
+  // Count-up (spec §8.3): once, when the band is 50% in view, 1.2s, ease-out,
+  // rAF-driven, honouring prefix/suffix. Under reduced motion or without JS
+  // the server-rendered final values simply stand.
+  const row = document.querySelector<HTMLElement>('#proof .proof__row');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (row && !reduceMotion && 'IntersectionObserver' in window) {
+    const counters = Array.from(row.querySelectorAll<HTMLElement>('[data-counter]')).map((el) => ({
+      el,
+      target: Number(el.dataset.target ?? '0'),
+      prefix: el.dataset.prefix ?? '',
+      suffix: el.dataset.suffix ?? '',
+    }));
+
+    const render = (p: number) => {
+      for (const c of counters) {
+        c.el.textContent = `${c.prefix}${Math.round(c.target * p)}${c.suffix}`;
+      }
+    };
+
+    // Zero out now, before the band can enter the viewport — otherwise the
+    // server-rendered finals are visible during the reveal fade and appear
+    // to jump backwards when the count starts.
+    render(0);
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        io.disconnect();
+
+        const duration = 1200;
+        let start: number | null = null;
+
+        const tick = (now: number) => {
+          if (start === null) start = now;
+          const t = Math.min((now - start) / duration, 1);
+          render(1 - Math.pow(1 - t, 3)); // cubic ease-out
+          if (t < 1) requestAnimationFrame(tick);
+        };
+
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.5 }
+    );
+
+    io.observe(row);
+  }
+</script>

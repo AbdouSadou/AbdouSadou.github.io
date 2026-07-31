@@ -1,0 +1,20 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# environment
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# internal drafts — public repo must never contain unpublished personal data (spec §10.4)
+abdou-sadou-portfolio-spec.md
+FRENCH-REVIEW.md
+_drafts/
+.claude/

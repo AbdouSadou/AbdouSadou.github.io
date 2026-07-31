@@ -1,0 +1,127 @@
+---
+// Footer (spec §4) — three quiet lines over a hairline rule. Line 3 is the
+// privacy stance, a brand statement for a GDPR specialist (spec §10.4).
+// Locale-aware: all copy comes from the shell dict.
+import { SITE } from '../consts';
+import type { Locale } from '../i18n';
+import { t } from '../i18n/shell';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const s = t[locale].footer;
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <p class="footer-line">{s.line1}</p>
+
+      <p class="footer-line footer-links">
+        <a class="link" href={`mailto:${SITE.email}`}>{s.emailLabel}</a>
+        <span class="sep" aria-hidden="true">·</span>
+        <a class="link" href={SITE.linkedin} target="_blank" rel="noopener noreferrer">
+          {s.linkedinLabel}
+          <svg
+            class="ext-mark"
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M3.5 8.5l5-5M4.5 3.5h4v4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"></path>
+          </svg>
+          <span class="sr-only">{s.newTabSuffix}</span>
+        </a>
+        <span class="sep" aria-hidden="true">·</span>
+        <a class="link" href={SITE.github} target="_blank" rel="noopener noreferrer">
+          {s.githubLabel}
+          <svg
+            class="ext-mark"
+            width="10"
+            height="10"
+            viewBox="0 0 12 12"
+            fill="none"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M3.5 8.5l5-5M4.5 3.5h4v4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"></path>
+          </svg>
+          <span class="sr-only">{s.newTabSuffix}</span>
+        </a>
+      </p>
+
+      <p class="footer-line footer-colophon mono">
+        {s.colophon}
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-inner {
+    border-top: 1px solid var(--line);
+    padding-block: var(--space-7) var(--space-8);
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .footer-line {
+    color: var(--text-lo);
+    font-size: var(--text-small);
+  }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  /* Quiet by default; lifts to full text colour on hover/focus.
+     min-height keeps the hit target ≥44px (spec §10.2). */
+  .footer-links .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: var(--space-1);
+    color: var(--text-lo);
+    transition: color var(--dur-ui) var(--ease-out);
+  }
+
+  .footer-links .link:hover,
+  .footer-links .link:focus-visible {
+    color: var(--text-hi);
+  }
+
+  .sep {
+    color: var(--text-lo);
+    opacity: 0.5;
+  }
+
+  .ext-mark {
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .footer-colophon {
+    /* .mono sets face and size; keep the colour quiet */
+    color: var(--text-lo);
+  }
+</style>

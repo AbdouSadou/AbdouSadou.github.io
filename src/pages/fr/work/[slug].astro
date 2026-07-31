@@ -1,0 +1,31 @@
+---
+// French case-study route: mirror of /work/[slug] over the 'fr/' entries.
+// Slugs are identical to the English ones, so hreflang alternates resolve.
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import CasePage from '../../../components/CasePage.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('work', ({ id }) => id.startsWith('fr/'));
+  return entries.map((entry) => ({
+    params: { slug: entry.id.split('/')[1] },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'work'>;
+}
+
+const { entry } = Astro.props;
+---
+
+<Base
+  locale="fr"
+  hasTranslation
+  title={`${entry.data.title} · Abdou Sadou`}
+  description={entry.data.outcome}
+>
+  <CasePage entry={entry} locale="fr" />
+</Base>

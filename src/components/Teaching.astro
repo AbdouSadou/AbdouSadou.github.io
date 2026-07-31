@@ -1,0 +1,168 @@
+---
+// Teaching (spec §5.5) — two-column split: display heading + paragraph on the
+// left, a compact "record card" fact list on the right. Stacks under 720px.
+import type { Locale } from '../i18n';
+import { t } from '../i18n/teaching';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const s = t[locale];
+---
+
+<section id="teaching" class="section" aria-labelledby="teaching-heading">
+  <div class="container">
+    <div class="teaching__grid">
+      <div class="teaching__intro" data-reveal>
+        <span class="eyebrow teaching__eyebrow">{s.eyebrow}</span>
+        <h2 id="teaching-heading">{s.heading}</h2>
+        <p>{s.para}</p>
+        <p class="teaching__closer">{s.closer}</p>
+      </div>
+
+      <div class="teaching__card" data-reveal>
+        <div class="teaching__card-head">
+          <span class="teaching__card-key">{s.cardKey}</span>
+          <svg
+            class="teaching__tick"
+            aria-hidden="true"
+            focusable="false"
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            fill="none"
+            stroke="var(--verified)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="9" cy="9" r="7.25"></circle>
+            <path d="m5.75 9.25 2.1 2.1 4.4-4.7"></path>
+          </svg>
+        </div>
+        <dl class="teaching__facts">
+          {
+            s.facts.map((fact) => (
+              <div class="teaching__row">
+                <dt>{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .teaching__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(var(--space-7), 6vw, var(--space-9));
+    align-items: start;
+  }
+
+  .teaching__eyebrow {
+    display: block;
+    margin-bottom: var(--space-4);
+  }
+
+  .teaching__intro h2 {
+    margin-bottom: var(--space-5);
+  }
+
+  .teaching__intro p {
+    color: var(--text-lo);
+    max-width: 58ch;
+  }
+
+  .teaching__intro p + p {
+    margin-top: var(--space-4);
+  }
+
+  /* The pay-off line carries the section — let it sit brighter. */
+  .teaching__closer {
+    color: var(--text-hi);
+  }
+
+  /* Record card — a quiet ledger echoing the hero's golden record. */
+  .teaching__card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+  }
+
+  .teaching__card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .teaching__card-key {
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--text-lo);
+  }
+
+  .teaching__tick {
+    flex: none;
+  }
+
+  .teaching__facts {
+    margin: 0;
+  }
+
+  .teaching__row {
+    display: grid;
+    grid-template-columns: 122px minmax(0, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .teaching__row + .teaching__row {
+    border-top: 1px solid var(--line);
+  }
+
+  .teaching__row dt {
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    color: var(--text-lo);
+  }
+
+  .teaching__row dd {
+    margin: 0;
+    font-size: var(--text-small);
+    color: var(--text-hi);
+  }
+
+  /* Stagger the card slightly behind the intro on entry. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .teaching__card[data-reveal] {
+      transition-delay: 120ms;
+    }
+  }
+
+  @media (max-width: 719px) {
+    .teaching__grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-7);
+    }
+  }
+
+  @media (max-width: 479px) {
+    .teaching__row {
+      grid-template-columns: 1fr;
+      gap: var(--space-1);
+    }
+  }
+</style>

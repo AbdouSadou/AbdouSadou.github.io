@@ -1,0 +1,151 @@
+---
+// Meta rail — the optional structural signature (spec §7.4). A slim fixed
+// left rail in vertical mono type: the current section as a catalogue key,
+// an honest record count while in Selected Work, and a last-updated stamp.
+// Pure decoration duplicating on-page information: aria-hidden, never
+// interactive, desktop (>=1200px) and JS only, hidden off the home page.
+// Locale-aware: catalogue keys come from the shell dict; they reach the
+// (shared, bundled) client script via a JSON data attribute.
+import type { Locale } from '../i18n';
+import { t } from '../i18n/shell';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const s = t[locale].rail;
+---
+
+<div
+  class="meta-rail"
+  aria-hidden="true"
+  hidden
+  data-meta-rail
+  data-section-keys={JSON.stringify(s.sectionKeys)}
+>
+  <p class="rail-line rail-line--key">
+    <span class="rail-key" data-rail-key>{s.sectionKeys.hero}</span><span class="rail-count" data-rail-count>{s.workCount}</span>
+  </p>
+  <p class="rail-line rail-line--updated">{s.updated}</p>
+</div>
+
+<style>
+  .meta-rail {
+    position: fixed;
+    inset-block: 0;
+    left: var(--space-2);
+    z-index: 40;
+    display: none;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.6;
+  }
+
+  /* Only shown when the viewport is wide enough, JS is running and the
+     home-page guard in the script has removed [hidden]. */
+  @media (min-width: 1200px) {
+    :global(html.js) .meta-rail:not([hidden]) {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-block: var(--space-10) var(--space-7);
+    }
+  }
+
+  .rail-line {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--text-lo);
+    white-space: nowrap;
+  }
+
+  /* Physical margins on purpose: the child's own writing mode is vertical,
+     so logical margin-block would act on the wrong axis. Centers the key
+     in the space above the last-updated stamp. */
+  .rail-line--key {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+
+  /* Crossfade on section change — opacity only (spec §8.1) */
+  .rail-key,
+  .rail-count {
+    transition: opacity var(--dur-ui) var(--ease-out);
+  }
+
+  .meta-rail.is-swapping .rail-key {
+    opacity: 0;
+  }
+
+  .rail-count {
+    opacity: 0;
+  }
+
+  .meta-rail.is-work .rail-count {
+    opacity: 1;
+  }
+</style>
+
+<script>
+  const rail = document.querySelector<HTMLElement>('[data-meta-rail]');
+  const keyEl = rail ? rail.querySelector<HTMLElement>('[data-rail-key]') : null;
+  const hero = document.getElementById('hero');
+
+  // Guard: home page only (the rail reads the home sections), JS required.
+  if (rail && keyEl && hero && 'IntersectionObserver' in window) {
+    rail.hidden = false;
+
+    // Localized catalogue keys, serialized server-side (the dict preserves
+    // scroll order, and JSON round-trips key order for string keys). This
+    // bundled script is shared by the EN and FR homes.
+    const SECTION_KEYS: Record<string, string> = JSON.parse(rail.dataset.sectionKeys || '{}');
+    const ids = Object.keys(SECTION_KEYS);
+    const sections = ids.map((id) => document.getElementById(id)).filter(
+      (el): el is HTMLElement => el !== null
+    );
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const visible = new Set<string>();
+    let current = 'hero';
+    let swapTimer = 0;
+
+    const setSection = (id: string) => {
+      const label = SECTION_KEYS[id];
+      if (!label || id === current) return;
+      current = id;
+      rail.classList.toggle('is-work', id === 'work');
+      if (reduceMotion.matches) {
+        keyEl.textContent = label;
+        return;
+      }
+      rail.classList.add('is-swapping');
+      window.clearTimeout(swapTimer);
+      swapTimer = window.setTimeout(() => {
+        keyEl.textContent = label;
+        rail.classList.remove('is-swapping');
+      }, 220); // matches --dur-ui
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(entry.target.id);
+          else visible.delete(entry.target.id);
+        }
+        for (const id of ids) {
+          if (visible.has(id)) {
+            setSection(id);
+            break;
+          }
+        }
+      },
+      { rootMargin: '-30% 0px -55% 0px', threshold: 0 }
+    );
+    sections.forEach((section) => io.observe(section));
+  }
+</script>

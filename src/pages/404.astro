@@ -1,0 +1,166 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="404 · record not found"
+  description="This page failed referential integrity. Back to the golden record."
+>
+  <section class="notfound">
+    <div class="container notfound__inner">
+      <svg class="notfound__card" viewBox="0 0 280 150" aria-hidden="true" focusable="false">
+        <rect
+          x="1"
+          y="1"
+          width="278"
+          height="148"
+          rx="12"
+          style="fill: var(--surface); stroke: var(--line-bright); stroke-width: 1.5;"
+        ></rect>
+        <text
+          x="20"
+          y="30"
+          style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; fill: var(--text-lo);"
+          >RECORD · this_page</text
+        >
+        <circle
+          cx="252"
+          cy="26"
+          r="8"
+          style="fill: none; stroke: var(--line-bright); stroke-width: 1.5;"></circle>
+        <line x1="16" y1="44" x2="264" y2="44" style="stroke: var(--line); stroke-width: 1;"></line>
+        <text
+          x="20"
+          y="72"
+          style="font-family: var(--font-mono); font-size: 11px; fill: var(--text-lo);">id</text
+        >
+        <text
+          x="110"
+          y="72"
+          style="font-family: var(--font-mono); font-size: 11px; fill: var(--chart-slate);"
+          >NULL</text
+        >
+        <text
+          x="20"
+          y="98"
+          style="font-family: var(--font-mono); font-size: 11px; fill: var(--text-lo);">status</text
+        >
+        <text
+          x="110"
+          y="98"
+          style="font-family: var(--font-mono); font-size: 11px; fill: var(--chart-slate);"
+          >NOT FOUND</text
+        >
+        <text
+          x="20"
+          y="124"
+          style="font-family: var(--font-mono); font-size: 11px; fill: var(--text-lo);">ref</text
+        >
+        <line
+          x1="110"
+          y1="120"
+          x2="200"
+          y2="120"
+          style="stroke: var(--lineage); stroke-width: 1.5; stroke-dasharray: 4 5; opacity: 0.7;"
+        ></line>
+        <path
+          d="M210 115 L 220 125 M220 115 L 210 125"
+          style="fill: none; stroke: var(--text-lo); stroke-width: 1.5; stroke-linecap: round;"
+        ></path>
+      </svg>
+      <h1 class="notfound__code mono">
+        <span class="notfound__error">ERROR 404</span> · record not found.
+      </h1>
+      <p class="notfound__detail mono text-lo">This page failed referential integrity.</p>
+      <a class="notfound__home link link--accent mono" href="/">
+        Back to the golden record
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+          <path
+            d="M2 8h11M9 3.5 13.5 8 9 12.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
+      <p class="notfound__detail notfound__detail--fr mono text-lo" lang="fr">
+        Cette page a échoué au contrôle d'intégrité référentielle.
+      </p>
+      <a class="notfound__home notfound__home--fr link mono" href="/fr/" lang="fr">
+        Retour au golden record
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+          <path
+            d="M2 8h11M9 3.5 13.5 8 9 12.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .notfound {
+    display: grid;
+    place-items: center;
+    min-height: 70vh;
+    padding-block: var(--section-pad);
+    text-align: center;
+  }
+
+  .notfound__inner {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+  }
+
+  .notfound__card {
+    width: min(280px, 80vw);
+    margin-bottom: var(--space-5);
+  }
+
+  .notfound__code {
+    font-family: var(--font-mono);
+    font-size: clamp(1.5rem, 4.5vw, 2.5rem);
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.3;
+  }
+
+  /* The 404 page is --status-error's one legitimate home (spec §7.2) */
+  .notfound__error {
+    color: var(--status-error);
+  }
+
+  .notfound__detail {
+    font-size: var(--text-small);
+  }
+
+  .notfound__home {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    margin-top: var(--space-4);
+  }
+
+  /* Quiet French pair beneath the primary English pair */
+  .notfound__detail--fr {
+    margin-top: var(--space-5);
+  }
+
+  .notfound__home.notfound__home--fr {
+    margin-top: 0;
+    font-size: var(--text-small);
+    color: var(--text-lo);
+  }
+
+  .notfound__home.notfound__home--fr:hover,
+  .notfound__home.notfound__home--fr:focus-visible {
+    color: var(--text-hi);
+  }
+</style>

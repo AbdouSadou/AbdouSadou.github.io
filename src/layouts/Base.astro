@@ -1,0 +1,151 @@
+---
+// Latin subset only (spec §10.1) — the English-only site never needs the
+// other subsets, so the variable faces are declared by hand from their
+// latin files and the mono face uses Fontsource's latin-only entries.
+import '@fontsource/ibm-plex-mono/latin-400.css';
+import '@fontsource/ibm-plex-mono/latin-500.css';
+import '../styles/global.css';
+import displayFontUrl from '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2?url';
+import bodyFontUrl from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url';
+
+const LATIN_RANGE =
+  'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD';
+
+const fontFaceCss = `
+@font-face {
+  font-family: 'Bricolage Grotesque Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url(${displayFontUrl}) format('woff2-variations');
+  unicode-range: ${LATIN_RANGE};
+}
+@font-face {
+  font-family: 'Instrument Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 700;
+  src: url(${bodyFontUrl}) format('woff2-variations');
+  unicode-range: ${LATIN_RANGE};
+}
+`;
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import { localizePath, type Locale } from '../i18n';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  jsonLd?: Record<string, unknown>;
+  locale?: Locale;
+  /** Set when a same-page translation exists: emits hreflang alternates */
+  hasTranslation?: boolean;
+}
+
+const {
+  title,
+  description,
+  jsonLd,
+  locale = 'en',
+  hasTranslation = false,
+  ogImage = locale === 'fr' ? '/og-fr.png' : '/og.png',
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogUrl = new URL(ogImage, Astro.site);
+const enUrl = new URL(localizePath(Astro.url.pathname, 'en'), Astro.site);
+const frUrl = new URL(localizePath(Astro.url.pathname, 'fr'), Astro.site);
+const skipLabel = locale === 'fr' ? 'Aller au contenu' : 'Skip to content';
+---
+
+<!doctype html>
+<html lang={locale === 'fr' ? 'fr' : 'en-GB'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    {
+      hasTranslation && (
+        <>
+          <link rel="alternate" hreflang="en" href={enUrl.href} />
+          <link rel="alternate" hreflang="fr" href={frUrl.href} />
+          <link rel="alternate" hreflang="x-default" href={enUrl.href} />
+        </>
+      )
+    }
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <style is:inline set:html={fontFaceCss}></style>
+    <link rel="preload" href={displayFontUrl} as="font" type="font/woff2" crossorigin />
+    <meta name="generator" content={Astro.generator} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={locale === 'fr' ? 'fr_FR' : 'en_GB'} />
+    <meta property="og:site_name" content="Abdou Sadou" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={ogUrl.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl.href} />
+
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      // Failsafe: if the bundled scripts never execute (blocked or failed
+      // chunk), drop back to the no-JS presentation so [data-reveal] content
+      // is never left hidden.
+      setTimeout(function () {
+        if (!document.documentElement.hasAttribute('data-js-live')) {
+          document.documentElement.classList.remove('js');
+        }
+      }, 4000);
+    </script>
+    {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{skipLabel}</a>
+    <Nav locale={locale} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+
+    <script>
+      // Shared scroll-reveal: flips .is-revealed on [data-reveal] elements.
+      // CSS gates the hidden state behind html.js + no-preference, so this
+      // degrades to static content without JS or under reduced motion.
+      document.documentElement.setAttribute('data-js-live', ''); // cancels the head failsafe
+      const revealables = document.querySelectorAll('[data-reveal]');
+      if ('IntersectionObserver' in window && revealables.length > 0) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+                io.unobserve(entry.target);
+              }
+            }
+          },
+          { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
+        );
+        revealables.forEach((el) => io.observe(el));
+      } else {
+        revealables.forEach((el) => el.classList.add('is-revealed'));
+      }
+    </script>
+
+    <script is:inline>
+      // For the developers who inevitably open devtools (spec §8.2).
+      console.log(
+        "%c-- SELECT * FROM candidates WHERE governance = 'strong' AND ships_products = TRUE; -- 1 row returned.",
+        'font-family: monospace; color: #2FBFAE;'
+      );
+    </script>
+  </body>
+</html>

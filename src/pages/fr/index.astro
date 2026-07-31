@@ -1,0 +1,65 @@
+---
+// French home page: mirror of / with the same sections in the same order.
+import Base from '../../layouts/Base.astro';
+import MetaRail from '../../components/MetaRail.astro';
+import Hero from '../../components/Hero.astro';
+import ProofBand from '../../components/ProofBand.astro';
+import SelectedWork from '../../components/SelectedWork.astro';
+import Experience from '../../components/Experience.astro';
+import Teaching from '../../components/Teaching.astro';
+import Certifications from '../../components/Certifications.astro';
+import Skills from '../../components/Skills.astro';
+import About from '../../components/About.astro';
+import Contact from '../../components/Contact.astro';
+import { SITE } from '../../consts';
+import { t } from '../../i18n/pages';
+
+const { title, description } = t.fr.home;
+
+// JSON-LD Person, French mirror (spec §10.3)
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Abdou Sadou',
+  jobTitle: 'Consultant en gouvernance des données et BI',
+  worksFor: {
+    '@type': 'Organization',
+    name: 'One1Star Solutions',
+  },
+  alumniOf: [
+    {
+      '@type': 'CollegeOrUniversity',
+      name: 'University of Huddersfield',
+    },
+    {
+      '@type': 'CollegeOrUniversity',
+      name: 'USTHB (Université des Sciences et de la Technologie Houari Boumediene)',
+    },
+  ],
+  knowsAbout: [
+    'gouvernance des données',
+    'gestion des données de référence',
+    'business intelligence',
+    'big data',
+  ],
+  address: {
+    '@type': 'PostalAddress',
+    addressRegion: 'West Yorkshire',
+    addressCountry: 'GB',
+  },
+  sameAs: [SITE.linkedin, SITE.github],
+};
+---
+
+<Base locale="fr" hasTranslation title={title} description={description} jsonLd={jsonLd}>
+  <MetaRail locale="fr" />
+  <Hero locale="fr" />
+  <ProofBand locale="fr" />
+  <SelectedWork locale="fr" />
+  <Experience locale="fr" />
+  <Teaching locale="fr" />
+  <Certifications locale="fr" />
+  <Skills locale="fr" />
+  <About locale="fr" />
+  <Contact locale="fr" />
+</Base>

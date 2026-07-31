@@ -1,0 +1,637 @@
+---
+// Site navigation (spec §4, behaviours §8.5) — sticky translucent bar, the
+// only glass on the site. Desktop: NAV_ITEMS + a visually distinct CV button.
+// Mobile (<720px, JS only): full-screen overlay menu with a focus trap.
+// Without JS the horizontal links stay visible and the burger never renders.
+// Locale-aware: labels come from the shell dict, hrefs are prefix-localized
+// (/#work → /fr/#work), and an EN · FR toggle links to the same page in the
+// other locale (slugs are identical, so pure prefix mapping is enough).
+import { NAV_ITEMS, SITE } from '../consts';
+import { localizePath, type Locale } from '../i18n';
+import { t } from '../i18n/shell';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props as Props;
+const s = t[locale].nav;
+const cvHref = locale === 'fr' ? SITE.cvPathFr : SITE.cvPath;
+const homeHref = localizePath('/', locale);
+const enHref = localizePath(Astro.url.pathname, 'en');
+const frHref = localizePath(Astro.url.pathname, 'fr');
+---
+
+<header class="site-nav" data-site-nav>
+  <div class="nav-bar container">
+    <a class="wordmark" href={homeHref}>abdou<span class="wordmark-dot">.</span>sadou</a>
+
+    <nav class="nav-desktop" aria-label={s.primary}>
+      <ul class="nav-list">
+        {
+          NAV_ITEMS.map((item) => (
+            <li>
+              <a class="nav-link" href={localizePath(item.href, locale)}>
+                {s.links[item.label]}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a class="cv-btn" href={cvHref} download>
+            CV<span aria-hidden="true"> ↓</span><span class="sr-only">{s.cvSrSuffix}</span>
+          </a>
+        </li>
+        <li>
+          <nav class="lang-toggle" aria-label={s.langLabel}>
+            <a class="lang-link" href={enHref} aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
+            <span class="lang-sep" aria-hidden="true">·</span>
+            <a class="lang-link" href={frHref} aria-current={locale === 'fr' ? 'true' : undefined}>FR</a>
+          </nav>
+        </li>
+      </ul>
+    </nav>
+
+    <button
+      class="menu-btn"
+      type="button"
+      aria-label={s.menuOpen}
+      aria-expanded="false"
+      aria-controls="nav-overlay"
+      data-menu-btn
+      data-label-open={s.menuOpen}
+      data-label-close={s.menuClose}
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+        <path d="M2.5 6.5h15M2.5 13.5h15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div
+  class="nav-overlay"
+  id="nav-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-label={s.overlayLabel}
+  hidden
+  data-nav-overlay
+>
+  <div class="overlay-top container">
+    <span class="wordmark" aria-hidden="true">abdou<span class="wordmark-dot">.</span>sadou</span>
+    <button class="close-btn" type="button" aria-label={s.menuClose} data-close-btn>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+        <path d="M4.5 4.5l11 11M15.5 4.5l-11 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+        ></path>
+      </svg>
+    </button>
+  </div>
+
+  <nav class="overlay-nav container">
+    <ul class="overlay-list">
+      {
+        NAV_ITEMS.map((item, index) => (
+          <li class="overlay-item">
+            <a class="overlay-link" href={localizePath(item.href, locale)}>
+              <span class="overlay-index" aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              {s.links[item.label]}
+            </a>
+          </li>
+        ))
+      }
+      <li class="overlay-item">
+        <a class="overlay-cv" href={cvHref} download>
+          CV<span aria-hidden="true"> ↓</span><span class="sr-only">{s.cvSrSuffix}</span>
+        </a>
+      </li>
+      <li class="overlay-item">
+        <nav class="lang-toggle lang-toggle--overlay" aria-label={s.langLabel}>
+          <a class="lang-link" href={enHref} aria-current={locale === 'en' ? 'true' : undefined}>EN</a>
+          <span class="lang-sep" aria-hidden="true">·</span>
+          <a class="lang-link" href={frHref} aria-current={locale === 'fr' ? 'true' : undefined}>FR</a>
+        </nav>
+      </li>
+    </ul>
+  </nav>
+</div>
+
+<style>
+  /* Anchor jumps must clear the fixed-height bar (skip-link, /#section) */
+  :global(html) {
+    scroll-padding-top: var(--space-9);
+  }
+
+  .site-nav,
+  .nav-overlay {
+    --nav-h: 80px;
+    --nav-h-scrolled: var(--space-8); /* 64px */
+  }
+
+  .site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    /* The only glass on the site (spec §7.4) */
+    background: var(--ink);
+    background: color-mix(in srgb, var(--ink) 70%, transparent);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .site-nav.is-scrolled {
+    background: color-mix(in srgb, var(--ink) 85%, transparent);
+  }
+
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    height: var(--nav-h);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-bar {
+      transition: height var(--dur-ui) var(--ease-out);
+    }
+  }
+
+  .site-nav.is-scrolled .nav-bar {
+    height: var(--nav-h-scrolled);
+  }
+
+  /* Wordmark — record-key motif, mono face, verified dot */
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--text-hi);
+  }
+
+  .wordmark-dot {
+    color: var(--verified);
+  }
+
+  .nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    list-style: none;
+    padding: 0;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: var(--space-3);
+    font-size: var(--text-small);
+    font-weight: 500;
+    color: var(--text-lo);
+    transition: color var(--dur-ui) var(--ease-out);
+  }
+
+  .nav-link:hover,
+  .nav-link:focus-visible {
+    color: var(--text-hi);
+  }
+
+  /* Active-section indicator: small verified dot beneath the label */
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    width: 4px;
+    height: 4px;
+    border-radius: var(--radius-chip);
+    background: var(--verified);
+    transform: translateX(-50%) scale(0);
+    transition: transform var(--dur-ui) var(--ease-out);
+  }
+
+  .nav-link.is-active {
+    color: var(--text-hi);
+  }
+
+  .nav-link.is-active::after {
+    transform: translateX(-50%) scale(1);
+  }
+
+  /* CV button — distinct but quieter than the primary CTA (no glow) */
+  .cv-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-left: var(--space-2);
+    padding-inline: var(--space-4);
+    border: 1px solid var(--verified);
+    border-color: color-mix(in srgb, var(--verified) 45%, transparent);
+    border-radius: var(--radius-chip);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--verified);
+    transition:
+      border-color var(--dur-ui) var(--ease-out),
+      background-color var(--dur-ui) var(--ease-out);
+  }
+
+  .cv-btn:hover,
+  .cv-btn:focus-visible {
+    border-color: var(--verified);
+    background: color-mix(in srgb, var(--verified) 8%, transparent);
+  }
+
+  /* Language toggle — quiet mono EN · FR; each half is a ≥44px hit target.
+     The current locale reads text-hi and carries aria-current="true". */
+  .lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    margin-left: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+  }
+
+  .lang-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+    color: var(--text-lo);
+    transition: color var(--dur-ui) var(--ease-out);
+  }
+
+  .lang-link:hover,
+  .lang-link:focus-visible {
+    color: var(--text-hi);
+  }
+
+  .lang-link[aria-current='true'] {
+    color: var(--text-hi);
+  }
+
+  .lang-sep {
+    color: var(--text-lo);
+    opacity: 0.5;
+  }
+
+  /* Burger — only exists once JS has arrived */
+  .menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-bright);
+    border-radius: var(--radius-chip);
+    background: transparent;
+    color: var(--text-hi);
+    cursor: pointer;
+  }
+
+  @media (max-width: 719.98px) {
+    :global(html.js) .nav-desktop {
+      display: none;
+    }
+
+    :global(html.js) .menu-btn {
+      display: inline-flex;
+    }
+
+    /* No-JS fallback: horizontal links stay visible and wrap */
+    :global(html:not(.js)) .nav-bar {
+      height: auto;
+      min-height: var(--nav-h-scrolled);
+      padding-block: var(--space-2);
+      flex-wrap: wrap;
+    }
+
+    :global(html:not(.js)) .nav-list {
+      flex-wrap: wrap;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Full-screen overlay menu (mobile, JS only)
+     ------------------------------------------------------------------ */
+
+  .nav-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    display: flex;
+    flex-direction: column;
+    /* Fully opaque: page content must never bleed through the menu.
+       Glass is reserved for the nav bar (spec §7.4). */
+    background: var(--ink);
+    overflow-y: auto;
+  }
+
+  .nav-overlay[hidden] {
+    display: none;
+  }
+
+  @media (min-width: 720px) {
+    .nav-overlay {
+      display: none !important;
+    }
+  }
+
+  .overlay-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    min-height: var(--nav-h);
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-bright);
+    border-radius: var(--radius-chip);
+    background: transparent;
+    color: var(--text-hi);
+    cursor: pointer;
+  }
+
+  .overlay-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-block: var(--space-6);
+  }
+
+  .overlay-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .overlay-link {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-4);
+    padding-block: var(--space-2);
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 9vw, 2.75rem);
+    font-weight: 650;
+    letter-spacing: var(--tracking-display);
+    line-height: 1.15;
+    color: var(--text-hi);
+  }
+
+  .overlay-index {
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    font-weight: 500;
+    color: var(--verified);
+  }
+
+  .overlay-cv {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: var(--space-5);
+    padding-inline: var(--space-5);
+    border: 1px solid var(--verified);
+    border-color: color-mix(in srgb, var(--verified) 45%, transparent);
+    border-radius: var(--radius-chip);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--verified);
+  }
+
+  /* Overlay variant of the language toggle: no bar offset, breathing room
+     below the CV button; link styles are shared. */
+  .lang-toggle--overlay {
+    margin-left: 0;
+    margin-top: var(--space-2);
+  }
+
+  /* Staggered entrance — declared only under no-preference so reduced
+     motion gets the finished state instantly (delays included) */
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-overlay.is-open {
+      animation: overlay-fade var(--dur-ui) var(--ease-out) both;
+    }
+
+    .nav-overlay.is-open .overlay-item {
+      animation: overlay-rise var(--dur-reveal) var(--ease-out) both;
+    }
+
+    .nav-overlay.is-open .overlay-item:nth-child(1) {
+      animation-delay: 50ms;
+    }
+    .nav-overlay.is-open .overlay-item:nth-child(2) {
+      animation-delay: 110ms;
+    }
+    .nav-overlay.is-open .overlay-item:nth-child(3) {
+      animation-delay: 170ms;
+    }
+    .nav-overlay.is-open .overlay-item:nth-child(4) {
+      animation-delay: 230ms;
+    }
+    .nav-overlay.is-open .overlay-item:nth-child(5) {
+      animation-delay: 290ms;
+    }
+    .nav-overlay.is-open .overlay-item:nth-child(6) {
+      animation-delay: 350ms;
+    }
+    /* 7th item: the language toggle — continues the existing stagger */
+    .nav-overlay.is-open .overlay-item:nth-child(7) {
+      animation-delay: 410ms;
+    }
+  }
+
+  @keyframes overlay-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes overlay-rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-site-nav]');
+  const overlay = document.querySelector<HTMLElement>('[data-nav-overlay]');
+  const menuBtn = document.querySelector<HTMLButtonElement>('[data-menu-btn]');
+  const closeBtn = document.querySelector<HTMLButtonElement>('[data-close-btn]');
+
+  // 1. Shrink 80px -> 64px after 40px of scroll (spec §8.5)
+  if (header) {
+    let shrunk = false;
+    const onScroll = () => {
+      // Hysteresis: shrink past 40px, restore under 16px — resting exactly
+      // at the threshold can't thrash the height (CLS, spec §10.1).
+      const y = window.scrollY;
+      const next = shrunk ? y > 16 : y > 40;
+      if (next !== shrunk) {
+        shrunk = next;
+        header.classList.toggle('is-scrolled', next);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  // 2. Active-section indicator — home page only (sections exist there);
+  //    on case pages nothing matches and no observer is created.
+  const SECTION_IDS = ['work', 'experience', 'teaching', 'about', 'contact'];
+  const sections = SECTION_IDS.map((id) => document.getElementById(id)).filter(
+    (el): el is HTMLElement => el !== null
+  );
+
+  if (header && sections.length > 0 && 'IntersectionObserver' in window) {
+    const links = new Map<string, HTMLAnchorElement>();
+    for (const id of SECTION_IDS) {
+      // Suffix match: hrefs are locale-prefixed ('/#work' on EN, '/fr/#work'
+      // on FR) so the indicator works on both homes. Language-toggle links
+      // carry no hash and can never match.
+      const link = header.querySelector<HTMLAnchorElement>(`.nav-list a[href$="/#${id}"]`);
+      if (link) links.set(id, link);
+    }
+
+    const visible = new Set<string>();
+    let activeId = '';
+
+    const apply = () => {
+      let next = '';
+      for (const id of SECTION_IDS) {
+        if (visible.has(id)) {
+          next = id;
+          break;
+        }
+      }
+      if (next === activeId) return;
+      activeId = next;
+      links.forEach((link, id) => {
+        const isActive = id === activeId;
+        link.classList.toggle('is-active', isActive);
+        if (isActive) link.setAttribute('aria-current', 'true');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(entry.target.id);
+          else visible.delete(entry.target.id);
+        }
+        apply();
+      },
+      { rootMargin: '-30% 0px -55% 0px', threshold: 0 }
+    );
+    sections.forEach((section) => io.observe(section));
+  }
+
+  // 3. Mobile overlay menu — scroll lock, Esc to close, focus trap,
+  //    focus returned to the burger on close (spec §10.2).
+  if (overlay && menuBtn && closeBtn) {
+    const mqDesktop = window.matchMedia('(min-width: 720px)');
+    let open = false;
+
+    // Localized labels come from the server-rendered data attributes: this
+    // bundled script is shared by the EN and FR pages.
+    const labelOpen = menuBtn.dataset.labelOpen || 'Open menu';
+    const labelClose = menuBtn.dataset.labelClose || 'Close menu';
+
+    const focusables = () =>
+      Array.from(overlay.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeMenu();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !overlay.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !overlay.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    const openMenu = () => {
+      if (open) return;
+      open = true;
+      overlay.hidden = false;
+      overlay.classList.add('is-open');
+      menuBtn.setAttribute('aria-expanded', 'true');
+      menuBtn.setAttribute('aria-label', labelClose);
+      document.documentElement.style.overflow = 'hidden';
+      document.addEventListener('keydown', onKeydown);
+      closeBtn.focus();
+    };
+
+    const closeMenu = (restoreFocus = true) => {
+      if (!open) return;
+      open = false;
+      overlay.classList.remove('is-open');
+      overlay.hidden = true;
+      menuBtn.setAttribute('aria-expanded', 'false');
+      menuBtn.setAttribute('aria-label', labelOpen);
+      document.documentElement.style.overflow = '';
+      document.removeEventListener('keydown', onKeydown);
+      // Never focus a hidden burger (e.g. after a resize to desktop closed us)
+      if (restoreFocus && menuBtn.offsetParent !== null) menuBtn.focus();
+    };
+
+    menuBtn.addEventListener('click', () => (open ? closeMenu() : openMenu()));
+    closeBtn.addEventListener('click', () => closeMenu());
+    // Any link chosen inside the overlay closes it (anchor jumps don't reload)
+    overlay.addEventListener('click', (event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('a[href]')) closeMenu();
+    });
+    // Crossing to desktop width while open: release the lock and close
+    mqDesktop.addEventListener('change', (event) => {
+      if (event.matches) closeMenu();
+    });
+  }
+</script>

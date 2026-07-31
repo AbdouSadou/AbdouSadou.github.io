@@ -1,0 +1,251 @@
+---
+// Experience timeline (spec §5.4, motion §8.4). Five entries, most recent
+// first, copy verbatim from the spec — strings (both locales) live in
+// src/i18n/experience.ts. The left rail draws itself via stroke-dashoffset
+// mapped to scroll progress; server HTML ships the line fully drawn, and JS
+// only introduces the undrawn state when motion is OK. Entry reveals use
+// the shared [data-reveal] observer in Base.
+import type { Locale } from '../i18n';
+import { t } from '../i18n/experience';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const strings = t[locale];
+const entries = strings.entries;
+---
+
+<section id="experience" class="section experience">
+  <div class="container">
+    <header class="section-header" data-reveal>
+      <span class="eyebrow">{strings.eyebrow}</span>
+      <h2>{strings.heading}</h2>
+    </header>
+
+    <div class="timeline">
+      <!-- Fully drawn by default (no-JS / reduced-motion final state); the
+           draw-on-scroll offset is initialised from JS only. -->
+      <svg
+        class="timeline__rail"
+        viewBox="0 0 2 100"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path class="timeline__rail-path" d="M1 0 L1 100" pathLength="1"></path>
+      </svg>
+
+      <ol class="timeline__list" role="list">
+        {
+          entries.map((entry, i) => (
+            <li
+              class:list={[
+                'timeline__entry',
+                { 'is-present': entry.present === true, 'is-now': i === 0 },
+              ]}
+              data-reveal
+            >
+              <span class="timeline__node" aria-hidden="true"></span>
+              <div class="timeline__head">
+                <span class="timeline__index mono" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <h3 class="timeline__role">
+                  {entry.role} <span class="timeline__org">· {entry.org}</span>
+                </h3>
+              </div>
+              <p class="timeline__meta mono">
+                <span class="timeline__dates">{entry.dates}</span> · {entry.location}
+              </p>
+              <p class="timeline__body">{entry.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Spec §8.4: entries rise 16px (the shared reveal default is 24px). Same
+     media + html.js gate as the global rule so the override tracks it. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .timeline__entry[data-reveal]:not(.is-revealed) {
+      transform: translateY(16px);
+    }
+  }
+
+  .timeline {
+    position: relative;
+    max-width: 46rem;
+  }
+
+  .timeline__rail {
+    position: absolute;
+    left: 5px;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .timeline__rail-path {
+    fill: none;
+    stroke: var(--chart-slate);
+    stroke-opacity: 0.5;
+    stroke-width: 2;
+  }
+
+  .timeline__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .timeline__entry {
+    position: relative;
+    padding-left: var(--space-7);
+  }
+
+  .timeline__entry + .timeline__entry {
+    margin-top: var(--space-8);
+  }
+
+  /* Node centred on the rail (rail centre sits at x = 6px). */
+  .timeline__node {
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 2px solid var(--chart-slate);
+  }
+
+  /* Present node (topmost only): amber, with a gentle 2s opacity-only pulse.
+     The ring stands static under reduced motion (spec §8.4, §8.1). */
+  .is-now .timeline__node {
+    border-color: var(--review);
+  }
+
+  .is-now .timeline__node::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 1px solid var(--review);
+    opacity: 0.45;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .is-now .timeline__node::after {
+      animation: node-pulse 2s var(--ease-out) infinite;
+    }
+
+    @keyframes node-pulse {
+      0%,
+      100% {
+        opacity: 0.12;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+  }
+
+  .timeline__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+  }
+
+  .timeline__index {
+    color: var(--text-lo);
+    flex: none;
+  }
+
+  .timeline__role {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.5;
+    max-width: 65ch;
+  }
+
+  .timeline__org {
+    color: var(--text-lo);
+    font-weight: 400;
+  }
+
+  .timeline__meta {
+    color: var(--text-lo);
+    margin-bottom: var(--space-4);
+    max-width: 65ch;
+  }
+
+  .is-present .timeline__dates {
+    color: var(--review);
+  }
+
+  .timeline__body {
+    color: var(--text-lo);
+    font-size: var(--text-small);
+    line-height: 1.7;
+    max-width: 65ch;
+  }
+
+  @media (max-width: 719px) {
+    .timeline__entry {
+      padding-left: var(--space-6);
+    }
+
+    .timeline__entry + .timeline__entry {
+      margin-top: var(--space-7);
+    }
+  }
+</style>
+
+<script>
+  // Rail draw (spec §8.4): stroke-dashoffset mapped to scroll progress through
+  // the timeline, rAF-throttled, vanilla JS. The undrawn state is set here —
+  // never in server HTML — so no-JS and reduced-motion users get the line
+  // fully drawn. update() runs synchronously at init, before the first
+  // animated frame paints.
+  const section = document.getElementById('experience');
+  const timeline = section?.querySelector<HTMLElement>('.timeline') ?? null;
+  const rail = section?.querySelector<SVGPathElement>('.timeline__rail-path') ?? null;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (timeline && rail && !reduceMotion) {
+    rail.style.strokeDasharray = '1';
+
+    let ticking = false;
+
+    const update = () => {
+      ticking = false;
+      const rect = timeline.getBoundingClientRect();
+      // The drawn tip tracks a reading line at 85% of the viewport height.
+      const progress = Math.min(
+        Math.max((window.innerHeight * 0.85 - rect.top) / rect.height, 0),
+        1
+      );
+      rail.style.strokeDashoffset = String(1 - progress);
+    };
+
+    const requestUpdate = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+
+    update();
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate, { passive: true });
+  }
+</script>

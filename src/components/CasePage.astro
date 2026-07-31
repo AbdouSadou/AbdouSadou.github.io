@@ -1,0 +1,522 @@
+---
+// Case-study template shared by /work/[slug] and /fr/work/[slug]. Entry ids
+// are locale-prefixed ('en/<slug>' | 'fr/<slug>'); next-case navigation stays
+// within the same locale and wraps by order.
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { Picture } from 'astro:assets';
+import { localizePath, type Locale } from '../i18n';
+import { t } from '../i18n/pages';
+
+interface Props {
+  entry: CollectionEntry<'work'>;
+  locale?: Locale;
+}
+
+const { entry, locale = 'en' } = Astro.props;
+const s = t[locale].case;
+const { Content } = await render(entry);
+
+const workHref = localizePath('/#work', locale);
+
+// Next-case wrap-around: sort this locale's entries by order, take the entry
+// after this one.
+const siblings = (await getCollection('work', ({ id }) => id.startsWith(`${locale}/`))).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const index = siblings.findIndex((e) => e.id === entry.id);
+const next = siblings[(index + 1) % siblings.length];
+const nextHref = next ? localizePath(`/work/${next.id.split('/')[1]}/`, locale) : '';
+---
+
+<article class="case">
+  <header class="case-hero">
+    <div class="container">
+      <nav class="case-crumb mono" aria-label={s.breadcrumbAria} data-reveal>
+        <a class="case-crumb__link" href={workHref}>{s.breadcrumbRoot}</a>
+        <span class="case-crumb__sep" aria-hidden="true">/</span>
+        <span aria-current="page">{entry.data.title.toUpperCase()}</span>
+      </nav>
+      <h1 class="case-title" data-reveal>{entry.data.title}</h1>
+      <p class="case-outcome" data-reveal>{entry.data.outcome}</p>
+      <div class="case-meta" data-reveal>
+        <ul class="case-stack" role="list">
+          {entry.data.stack.map((tool) => <li class="chip">{tool}</li>)}
+        </ul>
+        <span class="case-year mono">{entry.data.year}</span>
+      </div>
+      {
+        entry.data.demo && (
+          <p class="case-demo" data-reveal>
+            <a
+              class="btn btn--primary"
+              href={entry.data.demo}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {s.liveDemo}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 12 12"
+                fill="none"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  d="M3.5 8.5l5-5M4.5 3.5h4v4"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  vector-effect="non-scaling-stroke"
+                />
+              </svg>
+              <span class="sr-only">{s.newTabSr}</span>
+            </a>
+          </p>
+        )
+      }
+      {
+        entry.data.confidential && (
+          <p class="case-confidential mono" data-reveal>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <circle cx="8" cy="8" r="6.75" stroke="currentColor" stroke-width="1.5" />
+              <path d="M8 7.25V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <circle cx="8" cy="4.75" r="0.9" fill="currentColor" />
+            </svg>
+            {s.confidential}
+          </p>
+        )
+      }
+    </div>
+  </header>
+
+  <div class="container">
+    <hr class="rule" />
+    <div class="prose">
+      <Content />
+    </div>
+  </div>
+
+  {
+    entry.data.screenshots && entry.data.screenshots.length > 0 && (
+      <section class="case-screens container" aria-label={s.screensEyebrow}>
+        <p class="eyebrow" aria-hidden="true">
+          {s.screensEyebrow}
+        </p>
+        {entry.data.screenshots.map((shot) => (
+          <figure class="case-screen" data-reveal>
+            <div class="case-screen__bar" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <Picture
+              src={shot.src}
+              formats={['avif']}
+              fallbackFormat="webp"
+              widths={[720, 1200, 1600]}
+              sizes="(max-width: 719px) 94vw, min(1152px, 94vw)"
+              alt={shot.alt}
+              loading="lazy"
+            />
+            <figcaption class="mono">{shot.caption}</figcaption>
+          </figure>
+        ))}
+      </section>
+    )
+  }
+
+  <footer class="case-footer">
+    <div class="container">
+      <hr class="rule" />
+      <p class="case-stackline mono">{s.stack} · {entry.data.stack.join(' · ')}</p>
+      <div class="case-nav">
+        <a class="case-back mono link" href={workHref}>
+          <svg class="case-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+            <path
+              d="M14 8H3M7 3.5 2.5 8 7 12.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          {s.allWork}
+        </a>
+        {
+          next && next.id !== entry.id && (
+            <a class="case-next" href={nextHref}>
+              <span class="case-next__label mono">
+                {s.nextCase}
+                <svg class="case-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+                  <path
+                    d="M2 8h11M9 3.5 13.5 8 9 12.5"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+              <span class="case-next__title">{next.data.title}</span>
+            </a>
+          )
+        }
+      </div>
+    </div>
+  </footer>
+</article>
+
+<style>
+  /* ------------------------------------------------------------------ hero */
+  .case-hero {
+    padding-block: var(--section-pad) var(--space-8);
+  }
+
+  .case-crumb {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--text-lo);
+    margin-bottom: var(--space-6);
+  }
+
+  .case-crumb__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--text-lo);
+    transition: color var(--dur-ui) var(--ease-out);
+  }
+
+  .case-crumb__link:hover,
+  .case-crumb__link:focus-visible {
+    color: var(--text-hi);
+  }
+
+  .case-crumb__sep {
+    opacity: 0.5;
+  }
+
+  .case-title {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    max-width: 20ch;
+  }
+
+  .case-outcome {
+    margin-top: var(--space-5);
+    max-width: 52ch;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--text-lo);
+  }
+
+  .case-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    margin-top: var(--space-6);
+  }
+
+  .case-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .case-year {
+    color: var(--text-lo);
+  }
+
+  .case-demo {
+    margin-top: var(--space-6);
+  }
+
+  /* ------------------------------------------------------- screenshots
+     Real product screens in minimal browser frames (spec §7.5). Desaturated
+     at rest, full colour on hover/focus — the §5.3 card behaviour. */
+  .case-screens {
+    margin-top: var(--space-8);
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .case-screens .eyebrow {
+    margin-bottom: calc(-1 * var(--space-3));
+  }
+
+  .case-screen {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    transition: border-color var(--dur-ui) var(--ease-out);
+  }
+
+  .case-screen__bar {
+    display: flex;
+    gap: 6px;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .case-screen__bar span {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-chip);
+    border: 1px solid var(--line-bright);
+  }
+
+  .case-screen :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: saturate(0.4) brightness(0.9);
+    transition: filter var(--dur-ui) var(--ease-out);
+  }
+
+  .case-screen:hover,
+  .case-screen:focus-within {
+    border-color: var(--line-bright);
+  }
+
+  .case-screen:hover :global(img),
+  .case-screen:focus-within :global(img) {
+    filter: none;
+  }
+
+  .case-screen figcaption {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--line);
+    font-size: var(--text-mono);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-lo);
+  }
+
+  .case-confidential {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    color: var(--text-lo);
+  }
+
+  .case-confidential svg {
+    flex: none;
+  }
+
+  /* ----------------------------------------------------------------- prose */
+  .prose {
+    counter-reset: case-section;
+    max-width: 720px;
+    padding-block: var(--space-8) var(--space-9);
+  }
+
+  .prose :global(h2) {
+    font-size: clamp(1.5rem, 2.5vw, 1.75rem);
+    margin-top: var(--space-8);
+    padding-top: var(--space-7);
+    border-top: 1px solid var(--line);
+  }
+
+  .prose :global(h2:first-child) {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  /* Mono catalogue index above each section heading */
+  .prose :global(h2)::before {
+    counter-increment: case-section;
+    content: counter(case-section, decimal-leading-zero);
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    font-weight: 500;
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--text-lo);
+    margin-bottom: var(--space-2);
+  }
+
+  .prose :global(p) {
+    margin-top: var(--space-4);
+    max-width: 65ch;
+    opacity: 0.95;
+  }
+
+  .prose :global(strong) {
+    font-weight: 600;
+    color: var(--text-hi);
+  }
+
+  .prose :global(a) {
+    color: var(--text-hi);
+    background-image: linear-gradient(var(--verified), var(--verified));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition: background-size var(--dur-ui) var(--ease-out);
+    padding-bottom: 2px;
+  }
+
+  .prose :global(a:hover),
+  .prose :global(a:focus-visible) {
+    background-size: 100% 1px;
+  }
+
+  /* Numbered approach: mono step numbers */
+  .prose :global(ol) {
+    list-style: none;
+    counter-reset: step;
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    max-width: 65ch;
+  }
+
+  .prose :global(ol > li) {
+    counter-increment: step;
+    position: relative;
+    padding-left: var(--space-7);
+    margin-top: var(--space-4);
+  }
+
+  .prose :global(ol > li)::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 0.3em;
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    color: var(--text-lo);
+  }
+
+  /* Governance bullets: quiet ledger dashes */
+  .prose :global(ul) {
+    list-style: none;
+    margin: var(--space-5) 0 0;
+    padding: 0;
+    max-width: 65ch;
+  }
+
+  .prose :global(ul > li) {
+    position: relative;
+    padding-left: var(--space-6);
+    margin-top: var(--space-4);
+  }
+
+  .prose :global(ul > li)::before {
+    content: '·';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--text-lo);
+  }
+
+  /* Abstract diagrams (confidential cases) */
+  .prose :global(figure) {
+    margin: var(--space-7) 0 0;
+    padding: var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+  }
+
+  .prose :global(figure svg) {
+    width: 100%;
+    height: auto;
+  }
+
+  .prose :global(figcaption) {
+    margin-top: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    color: var(--text-lo);
+  }
+
+  /* ---------------------------------------------------------------- footer */
+  .case-footer {
+    padding-block: 0 var(--section-pad);
+  }
+
+  .case-stackline {
+    margin-top: var(--space-6);
+    color: var(--text-lo);
+    letter-spacing: var(--tracking-eyebrow);
+  }
+
+  .case-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    margin-top: var(--space-7);
+  }
+
+  .case-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 44px;
+  }
+
+  .case-next {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 0 1 380px;
+    margin-left: auto;
+    padding: var(--space-5);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    transition:
+      transform var(--dur-ui) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out);
+  }
+
+  .case-next:hover,
+  .case-next:focus-visible {
+    transform: translateY(-4px);
+    border-color: var(--line-bright);
+  }
+
+  .case-next__label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-lo);
+    letter-spacing: var(--tracking-eyebrow);
+  }
+
+  .case-next__title {
+    font-family: var(--font-display);
+    font-weight: 650;
+    font-size: var(--text-h3);
+    letter-spacing: var(--tracking-display);
+    line-height: 1.25;
+  }
+
+  @media (max-width: 720px) {
+    .case-next {
+      flex-basis: 100%;
+      margin-left: 0;
+    }
+  }
+</style>

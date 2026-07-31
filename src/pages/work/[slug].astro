@@ -1,0 +1,31 @@
+---
+// English case-study route: thin shell over CasePage. Entry ids are
+// locale-prefixed ('en/<slug>'); the URL slug is the part after the prefix.
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import CasePage from '../../components/CasePage.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('work', ({ id }) => id.startsWith('en/'));
+  return entries.map((entry) => ({
+    params: { slug: entry.id.split('/')[1] },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'work'>;
+}
+
+const { entry } = Astro.props;
+---
+
+<Base
+  locale="en"
+  hasTranslation
+  title={`${entry.data.title} · Abdou Sadou`}
+  description={entry.data.outcome}
+>
+  <CasePage entry={entry} locale="en" />
+</Base>

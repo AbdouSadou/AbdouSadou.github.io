@@ -1,0 +1,318 @@
+---
+import { getCollection } from 'astro:content';
+import type { Locale } from '../i18n';
+import { t } from '../i18n/work';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const strings = t[locale];
+
+// Case cards (spec §5.3), ordered by frontmatter `order`:
+// Inventara, Customer Data 360, Decision Tree Builder, Network Change Registry.
+// Entry ids are '<locale>/<slug>' (en/inventara, fr/inventara, ...): keep the
+// current locale's entries and derive the URL slug from the id's second half.
+const cases = (await getCollection('work', (entry) => entry.id.startsWith(`${locale}/`))).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+// Duotone motifs (spec §7.5, §8.5): one abstract inline SVG per case, drawn
+// only in palette colours. Desaturated at rest; lifts to full colour on
+// hover/focus-within. 640×400 = fixed 16:10 with explicit dimensions (CLS 0).
+const motifs: Record<string, string> = {
+  // Warehouse/batch schema: two master tables feed a FEFO batch queue —
+  // the oldest-expiry batch (amber) exits first, stamped verified.
+  inventara: `<svg viewBox="0 0 640 400" width="640" height="400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <rect x="52" y="64" width="176" height="116" rx="8" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <line x1="52" y1="96" x2="228" y2="96" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="68" y="76" width="76" height="8" rx="4" fill="var(--verified)"/>
+    <rect x="68" y="112" width="112" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="68" y="130" width="88" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="68" y="148" width="124" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="84" y="228" width="176" height="98" rx="8" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <line x1="84" y1="260" x2="260" y2="260" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="100" y="240" width="64" height="8" rx="4" fill="var(--lineage)"/>
+    <rect x="100" y="276" width="104" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="100" y="294" width="128" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <path d="M228 122C306 122 336 178 384 194" stroke="var(--lineage)" stroke-width="1.5"/>
+    <path d="M260 277C316 277 340 222 384 206" stroke="var(--lineage)" stroke-width="1.5"/>
+    <rect x="388" y="180" width="40" height="40" rx="6" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="436" y="180" width="40" height="40" rx="6" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="484" y="180" width="40" height="40" rx="6" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="532" y="180" width="40" height="40" rx="6" stroke="var(--review)" stroke-width="1.5"/>
+    <rect x="396" y="232" width="24" height="4" rx="2" fill="var(--chart-slate)" opacity="0.5"/>
+    <rect x="444" y="232" width="24" height="4" rx="2" fill="var(--chart-slate)" opacity="0.5"/>
+    <rect x="492" y="232" width="24" height="4" rx="2" fill="var(--chart-slate)" opacity="0.5"/>
+    <rect x="540" y="232" width="24" height="4" rx="2" fill="var(--review)" opacity="0.8"/>
+    <path d="M580 200h24m0 0-7-7m7 7-7 7" stroke="var(--review)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="556" cy="100" r="18" stroke="var(--verified)" stroke-width="1.5"/>
+    <path d="M548 100l6 6 12-12" stroke="var(--verified)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+
+  // Radial hub-and-spoke lineage: many sources resolving to one verified
+  // customer record at the hub; violet lineage spokes, one node under review.
+  'customer-data-360': `<svg viewBox="0 0 640 400" width="640" height="400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <ellipse cx="320" cy="200" rx="210" ry="130" stroke="var(--chart-slate)" stroke-width="1" opacity="0.35" stroke-dasharray="2 6"/>
+    <g stroke="var(--chart-slate)" stroke-width="1.5" opacity="0.6">
+      <line x1="320" y1="200" x2="530" y2="200"/>
+      <line x1="320" y1="200" x2="469" y2="292"/>
+      <line x1="320" y1="200" x2="320" y2="330"/>
+      <line x1="320" y1="200" x2="172" y2="292"/>
+      <line x1="320" y1="200" x2="110" y2="200"/>
+      <line x1="320" y1="200" x2="469" y2="108"/>
+    </g>
+    <line x1="320" y1="200" x2="172" y2="108" stroke="var(--lineage)" stroke-width="1.5"/>
+    <line x1="320" y1="200" x2="320" y2="70" stroke="var(--lineage)" stroke-width="1.5"/>
+    <g stroke="var(--chart-slate)" stroke-width="1.5" fill="var(--surface-2)">
+      <circle cx="530" cy="200" r="10"/>
+      <circle cx="320" cy="330" r="10"/>
+      <circle cx="172" cy="292" r="10"/>
+      <circle cx="110" cy="200" r="10"/>
+      <circle cx="469" cy="108" r="10"/>
+    </g>
+    <circle cx="469" cy="292" r="10" stroke="var(--review)" stroke-width="1.5" fill="var(--surface-2)"/>
+    <circle cx="172" cy="108" r="10" stroke="var(--lineage)" stroke-width="1.5" fill="var(--surface-2)"/>
+    <circle cx="320" cy="70" r="10" stroke="var(--lineage)" stroke-width="1.5" fill="var(--surface-2)"/>
+    <circle cx="320" cy="200" r="30" fill="var(--surface-2)" stroke="var(--verified)" stroke-width="1.5"/>
+    <path d="M308 200l8 8 16-16" stroke="var(--verified)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+
+  // Branching tree of builder nodes: violet root, one evaluated path in
+  // verified teal down to a ticked leaf, one leaf still under review.
+  'decision-tree-builder': `<svg viewBox="0 0 640 400" width="640" height="400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <path d="M320 88C320 134 192 124 192 170" stroke="var(--verified)" stroke-width="1.5"/>
+    <path d="M320 88C320 134 448 124 448 170" stroke="var(--chart-slate)" stroke-width="1.5" opacity="0.6"/>
+    <path d="M192 206C192 252 96 242 96 288" stroke="var(--chart-slate)" stroke-width="1.5" opacity="0.6"/>
+    <path d="M192 206C192 252 256 242 256 288" stroke="var(--verified)" stroke-width="1.5"/>
+    <path d="M448 206C448 252 384 242 384 288" stroke="var(--chart-slate)" stroke-width="1.5" opacity="0.6"/>
+    <path d="M448 206C448 252 544 242 544 288" stroke="var(--chart-slate)" stroke-width="1.5" opacity="0.6"/>
+    <rect x="288" y="52" width="64" height="36" rx="8" fill="var(--surface-2)" stroke="var(--lineage)" stroke-width="1.5"/>
+    <rect x="300" y="67" width="40" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="160" y="170" width="64" height="36" rx="8" fill="var(--surface-2)" stroke="var(--verified)" stroke-width="1.5"/>
+    <rect x="172" y="185" width="40" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="416" y="170" width="64" height="36" rx="8" fill="var(--surface-2)" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="428" y="185" width="40" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="64" y="288" width="64" height="36" rx="8" fill="var(--surface-2)" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="76" y="303" width="40" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="224" y="288" width="64" height="36" rx="8" fill="var(--surface-2)" stroke="var(--verified)" stroke-width="1.5"/>
+    <path d="M245 306l7 7 13-13" stroke="var(--verified)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="352" y="288" width="64" height="36" rx="8" fill="var(--surface-2)" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="364" y="303" width="40" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="512" y="288" width="64" height="36" rx="8" fill="var(--surface-2)" stroke="var(--review)" stroke-width="1.5"/>
+    <rect x="524" y="303" width="40" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+  </svg>`,
+
+  // Network graph over a ledger grid: change tracking as a ruled registry,
+  // one change in amber dash, one node verified, a violet lineage edge.
+  'network-change-registry': `<svg viewBox="0 0 640 400" width="640" height="400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <g stroke="var(--chart-slate)" stroke-width="1" opacity="0.18">
+      <line x1="32" y1="60" x2="608" y2="60"/>
+      <line x1="32" y1="100" x2="608" y2="100"/>
+      <line x1="32" y1="140" x2="608" y2="140"/>
+      <line x1="32" y1="180" x2="608" y2="180"/>
+      <line x1="32" y1="220" x2="608" y2="220"/>
+      <line x1="32" y1="260" x2="608" y2="260"/>
+      <line x1="32" y1="300" x2="608" y2="300"/>
+      <line x1="32" y1="340" x2="608" y2="340"/>
+    </g>
+    <line x1="96" y1="36" x2="96" y2="364" stroke="var(--review)" stroke-width="1" opacity="0.4"/>
+    <g fill="var(--chart-slate)" opacity="0.4">
+      <rect x="48" y="78" width="32" height="4" rx="2"/>
+      <rect x="48" y="118" width="32" height="4" rx="2"/>
+      <rect x="48" y="158" width="32" height="4" rx="2"/>
+      <rect x="48" y="198" width="32" height="4" rx="2"/>
+      <rect x="48" y="238" width="32" height="4" rx="2"/>
+      <rect x="48" y="278" width="32" height="4" rx="2"/>
+      <rect x="48" y="318" width="32" height="4" rx="2"/>
+    </g>
+    <g stroke="var(--chart-slate)" stroke-width="1.5" opacity="0.7">
+      <line x1="176" y1="120" x2="312" y2="84"/>
+      <line x1="312" y1="84" x2="452" y2="140"/>
+      <line x1="176" y1="120" x2="248" y2="240"/>
+      <line x1="452" y1="140" x2="548" y2="228"/>
+      <line x1="548" y1="228" x2="404" y2="288"/>
+    </g>
+    <line x1="312" y1="84" x2="248" y2="240" stroke="var(--lineage)" stroke-width="1.5" opacity="0.8"/>
+    <line x1="248" y1="240" x2="404" y2="288" stroke="var(--review)" stroke-width="1.5" stroke-dasharray="4 6"/>
+    <g stroke="var(--chart-slate)" stroke-width="1.5" fill="var(--surface-2)">
+      <circle cx="176" cy="120" r="9"/>
+      <circle cx="312" cy="84" r="9"/>
+      <circle cx="248" cy="240" r="9"/>
+      <circle cx="404" cy="288" r="9"/>
+      <circle cx="548" cy="228" r="9"/>
+    </g>
+    <circle cx="452" cy="140" r="11" stroke="var(--verified)" stroke-width="1.5" fill="var(--surface-2)"/>
+    <path d="M446 140l4 4 8-8" stroke="var(--verified)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+};
+---
+
+<section id="work" class="section" aria-labelledby="work-heading">
+  <div class="container">
+    <header class="section-header" data-reveal>
+      <p class="eyebrow">{strings.eyebrow}</p>
+      <h2 id="work-heading">{strings.heading}</h2>
+    </header>
+
+    <ul class="work-grid" role="list">
+      {
+        cases.map((entry, index) => (
+          <li class="work-grid__item" data-reveal style={`transition-delay: ${index * 60}ms;`}>
+            <article class="work-card">
+              <div
+                class="work-card__visual"
+                aria-hidden="true"
+                set:html={motifs[entry.id.split('/')[1]] ?? ''}
+              />
+              <div class="work-card__body">
+                <h3 class="work-card__title">
+                  <a
+                    class="work-card__link"
+                    href={`${locale === 'fr' ? '/fr' : ''}/work/${entry.id.split('/')[1]}/`}
+                  >
+                    {entry.data.title}
+                  </a>
+                </h3>
+                <p class="work-card__outcome">{entry.data.outcome}</p>
+                <ul class="work-card__chips" role="list">
+                  {entry.data.stack.slice(0, 4).map((tool) => (
+                    <li class="chip">{tool}</li>
+                  ))}
+                </ul>
+                <span class="work-card__cta" aria-hidden="true">
+                  {strings.readCaseStudy}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" focusable="false">
+                    <path
+                      d="M2 8h11M9 3.5 13.5 8 9 12.5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </article>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .work-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+    list-style: none;
+    padding: 0;
+  }
+
+  @media (min-width: 720px) {
+    .work-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* data-reveal lives on the <li> wrapper so the reveal transition (700ms)
+     never competes with the card's own 220ms hover transitions. */
+  .work-grid__item {
+    display: flex;
+  }
+
+  .work-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    transition:
+      transform var(--dur-ui) var(--ease-out),
+      border-color var(--dur-ui) var(--ease-out);
+  }
+
+  /* §8.5: 4px lift, border brightens; :focus-within mirrors hover so
+     keyboard focus on the stretched link gets the same treatment. */
+  .work-card:hover,
+  .work-card:focus-within {
+    transform: translateY(-4px);
+    border-color: var(--line-bright);
+  }
+
+  .work-card__visual {
+    background: var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Duotone at rest → full colour on hover/focus (§8.5). Explicit 640×400
+     attributes on the svg reserve the 16:10 box, so CLS stays at 0. */
+  .work-card__visual svg {
+    width: 100%;
+    height: auto;
+    opacity: 0.55;
+    filter: saturate(0.4);
+    transition:
+      opacity var(--dur-ui) var(--ease-out),
+      filter var(--dur-ui) var(--ease-out);
+  }
+
+  .work-card:hover .work-card__visual svg,
+  .work-card:focus-within .work-card__visual svg {
+    opacity: 1;
+    filter: saturate(1);
+  }
+
+  .work-card__body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+
+  /* Stretched link: the title anchor's ::after covers the card, so the
+     whole card is one clean link named by the title text. */
+  .work-card__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .work-card__outcome {
+    color: var(--text-lo);
+    font-size: var(--text-small);
+  }
+
+  .work-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+    padding: 0;
+  }
+
+  .work-card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: auto;
+    color: var(--verified);
+    font-size: var(--text-small);
+    font-weight: 550;
+  }
+
+  .work-card__cta svg {
+    transition: transform var(--dur-ui) var(--ease-out);
+  }
+
+  .work-card:hover .work-card__cta svg,
+  .work-card:focus-within .work-card__cta svg {
+    transform: translateX(4px);
+  }
+</style>

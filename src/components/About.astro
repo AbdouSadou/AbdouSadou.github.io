@@ -1,0 +1,207 @@
+---
+// About (spec §5.8) — duotone-treated portrait beside the bio, languages
+// line and a compact hairline-ruled education list. Stacks <720px.
+// The duotone (ink shadows, teal-tinted highlights) is applied in CSS over
+// a grayscale base, so the source photo stays untouched.
+import { Picture } from 'astro:assets';
+import type { Locale } from '../i18n';
+import { t } from '../i18n/about';
+import portrait from '../assets/portrait.png';
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props as Props;
+const s = t[locale];
+---
+
+<section id="about" class="section" aria-labelledby="about-heading">
+  <div class="container">
+    <div class="section-header" data-reveal>
+      <span class="eyebrow">{s.eyebrow}</span>
+      <h2 id="about-heading">{s.heading}</h2>
+    </div>
+
+    <div class="about__grid">
+      <figure class="about__portrait" data-reveal>
+        <div class="about__photo">
+          <Picture
+            src={portrait}
+            formats={['avif']}
+            fallbackFormat="webp"
+            widths={[400, 680, 800]}
+            sizes="(max-width: 719px) 90vw, 400px"
+            alt={s.portraitAlt}
+            loading="lazy"
+          />
+        </div>
+        <figcaption>{s.figcaption}</figcaption>
+      </figure>
+
+      <div class="about__bio" data-reveal>
+        <p>{s.bio1}</p>
+        <p>{s.bio2}</p>
+
+        <p class="about__langs mono">
+          <span class="sr-only">{s.langsSrLabel}</span>
+          {s.langs}
+        </p>
+
+        <h3 class="eyebrow about__edu-heading">{s.eduHeading}</h3>
+        <ul class="about__edu">
+          {
+            s.education.map((item) => (
+              <li>
+                <span class="about__edu-degree">{item.degree}</span>
+                <span class="about__edu-inst">{item.institution}</span>
+                <span class="about__edu-dates mono">{item.dates}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(var(--space-7), 6vw, var(--space-9));
+    align-items: start;
+  }
+
+  /* Portrait presented as a record attachment */
+  .about__portrait {
+    width: 100%;
+    max-width: 400px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+  }
+
+  /* Duotone treatment (spec §7.5): grayscale base, teal-tinted highlights
+     via multiply, shadows lifted to ink via lighten — never pure black. */
+  .about__photo {
+    position: relative;
+    aspect-ratio: 4 / 5;
+  }
+
+  .about__photo :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 46% 22%;
+    filter: grayscale(1) contrast(1.1) brightness(0.78);
+  }
+
+  .about__photo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: color-mix(in srgb, var(--verified) 55%, #b8c7cc);
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .about__photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: var(--ink);
+    mix-blend-mode: lighten;
+    pointer-events: none;
+  }
+
+  .about__portrait figcaption {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--text-lo);
+  }
+
+  .about__bio > p {
+    color: var(--text-lo);
+    max-width: 62ch;
+  }
+
+  .about__bio > p + p {
+    margin-top: var(--space-4);
+  }
+
+  .about__langs {
+    margin-top: var(--space-6);
+    color: var(--text-lo);
+  }
+
+  .about__edu-heading {
+    display: block;
+    margin-top: var(--space-7);
+    margin-bottom: var(--space-2);
+  }
+
+  .about__edu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 62ch;
+  }
+
+  .about__edu li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+
+  .about__edu li:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .about__edu-degree {
+    font-size: var(--text-small);
+    font-weight: 500;
+    color: var(--text-hi);
+  }
+
+  .about__edu-inst {
+    flex: 1;
+    min-width: fit-content;
+    font-size: var(--text-small);
+    color: var(--text-lo);
+  }
+
+  .about__edu-dates {
+    margin-left: auto;
+    color: var(--text-lo);
+  }
+
+  /* Let the bio trail the portrait slightly on entry. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .about__bio[data-reveal] {
+      transition-delay: 120ms;
+    }
+  }
+
+  @media (max-width: 719px) {
+    .about__grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-7);
+    }
+
+    .about__portrait {
+      max-width: 340px;
+    }
+  }
+</style>

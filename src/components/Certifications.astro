@@ -1,0 +1,159 @@
+---
+// Certifications (spec §5.6): data verbatim from the CV, the only four.
+// Issuers, certificate names and dates are the official credential titles
+// and stay English in both locales; UI strings live in src/i18n/certs.ts.
+import type { Locale } from '../i18n';
+import { t } from '../i18n/certs';
+
+interface Certification {
+  issuer: string;
+  name: string;
+  date: string;
+  /** Credential URL. "Verify →" renders only when non-null — no dead links ship. */
+  url: string | null;
+}
+
+const certifications: Certification[] = [
+  {
+    issuer: 'Microsoft',
+    // Named after the credential the Verify link actually opens (Coursera
+    // course certificate) so the claim and its proof match.
+    name: 'Data Analysis and Visualization with Power BI',
+    date: 'Mar 2025',
+    url: 'https://www.coursera.org/account/accomplishments/verify/WVHFDWO0ISIB',
+  },
+  {
+    issuer: 'Google',
+    name: 'Business Intelligence Professional Certificate',
+    date: 'Feb 2025',
+    url: 'https://www.coursera.org/account/accomplishments/professional-cert/I0W52YHPWW84',
+  },
+  {
+    issuer: 'Google',
+    name: 'Advanced Data Analytics Professional Certificate',
+    date: 'Feb 2025',
+    url: 'https://www.coursera.org/account/accomplishments/professional-cert/LW7US1L0RG4E',
+  },
+  {
+    issuer: 'Deloitte',
+    name: 'Data Analytics Certificate',
+    date: 'Jan 2025',
+    url: 'https://forage-uploads-prod.s3.amazonaws.com/completion-certificates/9PBTqmSxAf6zZTseP/io9DzWKe3PTsiS6GG_9PBTqmSxAf6zZTseP_rd3h2GsxnFaegECML_1739052634411_completion_certificate.pdf',
+  },
+];
+
+interface Props {
+  locale?: Locale;
+}
+
+const { locale = 'en' } = Astro.props;
+const strings = t[locale];
+---
+
+<section id="certifications" class="section" aria-labelledby="certifications-heading">
+  <div class="container">
+    <header class="section-header certs-header" data-reveal>
+      <p class="eyebrow">{strings.eyebrow}</p>
+      <h2 id="certifications-heading" class="certs-heading">{strings.heading}</h2>
+    </header>
+
+    <ul class="certs-list" role="list">
+      {
+        certifications.map((cert) => (
+          <li class="certs-item" data-reveal>
+            <span class="mono certs-issuer">{cert.issuer}</span>
+            <span class="certs-name">{cert.name}</span>
+            <span class="certs-meta">
+              <span class="mono certs-date">{cert.date}</span>
+              {cert.url !== null && (
+                <a
+                  class="link link--accent mono certs-verify"
+                  href={cert.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {strings.verify}
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">
+                    <path
+                      d="M3.5 8.5l5-5M4.5 3.5h4v4"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      vector-effect="non-scaling-stroke"
+                    />
+                  </svg>
+                  <span class="sr-only">{strings.srCredential(cert.name)}</span>
+                </a>
+              )}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  /* Same header pattern as every section — one h2 scale site-wide keeps
+     the type system governed (spec §7.3). */
+  .certs-header {
+    margin-bottom: var(--space-7);
+  }
+
+  /* Single row of four; wraps 2×2 on mobile. No cards — each entry is a
+     ledger line keyed by a hairline rule. */
+  .certs-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: var(--space-5);
+    row-gap: var(--space-6);
+    list-style: none;
+    padding: 0;
+  }
+
+  @media (min-width: 960px) {
+    .certs-list {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .certs-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    border-top: 1px solid var(--line);
+    padding-top: var(--space-4);
+  }
+
+  .certs-issuer {
+    color: var(--text-lo);
+  }
+
+  /* flex-grow pins the meta line to the bottom, so dates align across the
+     row even when certificate names wrap to different line counts. */
+  .certs-name {
+    flex-grow: 1;
+    color: var(--text-hi);
+    font-size: var(--text-small);
+    font-weight: 550;
+    line-height: 1.4;
+  }
+
+  .certs-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .certs-date {
+    color: var(--text-lo);
+  }
+
+  .certs-verify {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+</style>
