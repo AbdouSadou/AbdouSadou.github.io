@@ -48,6 +48,16 @@ interface Props {
 
 const { locale = 'en' } = Astro.props;
 const strings = t[locale];
+
+// Featured credential: ISO 8000 master data quality — the standard behind
+// the site's whole thesis, so it gets the full-width ledger line. It is
+// also the one credential here with a validity period, displayed as such.
+const mdqm = {
+  issuer: 'ECCMA',
+  name: 'Master Data Quality Manager',
+  standard: 'ISO 8000-110',
+  url: 'https://eccma.org/forms/certificationdirectory/cert_content/ECCMA.MDQM:2026073100',
+};
 ---
 
 <section id="certifications" class="section" aria-labelledby="certifications-heading">
@@ -56,6 +66,36 @@ const strings = t[locale];
       <p class="eyebrow">{strings.eyebrow}</p>
       <h2 id="certifications-heading" class="certs-heading">{strings.heading}</h2>
     </header>
+
+    <div class="certs-featured" data-reveal>
+      <span class="mono certs-issuer">{mdqm.issuer}</span>
+      <span class="certs-featured__name">
+        {mdqm.name}
+        <span class="chip">{mdqm.standard}</span>
+      </span>
+      <span class="certs-featured__meta">
+        <span class="mono certs-date">{strings.mdqmDates}</span>
+        <a
+          class="link link--accent mono certs-verify"
+          href={mdqm.url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {strings.verify}
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">
+            <path
+              d="M3.5 8.5l5-5M4.5 3.5h4v4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"
+            />
+          </svg>
+          <span class="sr-only">{strings.srCredential(mdqm.name)}</span>
+        </a>
+      </span>
+    </div>
 
     <ul class="certs-list" role="list">
       {
@@ -99,6 +139,33 @@ const strings = t[locale];
      the type system governed (spec §7.3). */
   .certs-header {
     margin-bottom: var(--space-7);
+  }
+
+  /* Featured MDQM row: full-width ledger line, keyed slightly brighter */
+  .certs-featured {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--line-bright);
+    padding-block: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  .certs-featured__name {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    flex-grow: 1;
+    color: var(--text-hi);
+    font-weight: 550;
+  }
+
+  .certs-featured__meta {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-5);
   }
 
   /* Single row of four; wraps 2×2 on mobile. No cards — each entry is a
