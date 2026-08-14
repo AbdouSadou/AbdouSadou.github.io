@@ -51,6 +51,49 @@ const motifs: Record<string, string> = {
     <path d="M548 100l6 6 12-12" stroke="var(--verified)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`,
 
+  // Governed pipeline, left to right: an open-data file flows through raw,
+  // staging and marts. The identifying field is neutralised in staging (amber,
+  // dashed), the published mart carries its two classification tags, and the
+  // whole chain is stamped verified.
+  'plateforme-gouvernance-donnees': `<svg viewBox="0 0 640 400" width="640" height="400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+    <rect x="36" y="112" width="120" height="176" rx="8" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <line x1="36" y1="148" x2="156" y2="148" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="52" y="124" width="56" height="8" rx="4" fill="var(--lineage)"/>
+    <rect x="52" y="166" width="88" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="52" y="188" width="68" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="52" y="210" width="80" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="52" y="232" width="60" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="52" y="254" width="76" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <path d="M156 200h44" stroke="var(--lineage)" stroke-width="1.5"/>
+    <path d="M304 200h44" stroke="var(--lineage)" stroke-width="1.5"/>
+    <path d="M452 200h44" stroke="var(--lineage)" stroke-width="1.5"/>
+    <g stroke="var(--lineage)" stroke-width="1" opacity="0.5">
+      <path d="M156 169h44"/>
+      <path d="M304 169h44"/>
+      <path d="M452 169h44"/>
+    </g>
+    <rect x="200" y="140" width="104" height="120" rx="8" fill="var(--surface-2)" stroke="var(--chart-slate)" stroke-width="1.5"/>
+    <rect x="218" y="166" width="68" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="218" y="190" width="52" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="218" y="214" width="60" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="218" y="238" width="44" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="348" y="140" width="104" height="120" rx="8" fill="var(--surface-2)" stroke="var(--lineage)" stroke-width="1.5"/>
+    <rect x="366" y="166" width="68" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="366" y="184" width="52" height="16" rx="4" stroke="var(--review)" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <rect x="366" y="214" width="60" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="366" y="232" width="44" height="16" rx="4" stroke="var(--review)" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <rect x="496" y="140" width="104" height="120" rx="8" fill="var(--surface-2)" stroke="var(--verified)" stroke-width="1.5"/>
+    <rect x="514" y="166" width="68" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="514" y="190" width="52" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="514" y="214" width="60" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="514" y="238" width="44" height="6" rx="3" fill="var(--chart-slate)" opacity="0.65"/>
+    <rect x="496" y="288" width="48" height="16" rx="8" stroke="var(--verified)" stroke-width="1.5"/>
+    <rect x="552" y="288" width="48" height="16" rx="8" stroke="var(--review)" stroke-width="1.5"/>
+    <line x1="548" y1="104" x2="548" y2="140" stroke="var(--verified)" stroke-width="1.5" opacity="0.4" stroke-dasharray="3 5"/>
+    <circle cx="548" cy="84" r="20" fill="var(--surface-2)" stroke="var(--verified)" stroke-width="1.5"/>
+    <path d="M539 84l6 6 13-13" stroke="var(--verified)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+
   // Radial hub-and-spoke lineage: many sources resolving to one verified
   // customer record at the hub; violet lineage spokes, one node under review.
   'customer-data-360': `<svg viewBox="0 0 640 400" width="640" height="400" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
