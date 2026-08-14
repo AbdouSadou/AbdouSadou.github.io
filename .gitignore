@@ -18,3 +18,6 @@ abdou-sadou-portfolio-spec.md
 FRENCH-REVIEW.md
 _drafts/
 .claude/
+
+# motif previews (scripts/preview-motif.mjs)
+.motif-preview/

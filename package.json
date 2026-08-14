@@ -7,7 +7,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "og": "node scripts/generate-og.mjs"
+    "og": "node scripts/generate-og.mjs",
+    "motif": "node scripts/preview-motif.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.2.1",
