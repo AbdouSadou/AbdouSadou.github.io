@@ -3,7 +3,7 @@ title: 'Decision Tree Builder'
 outcome: 'A decision-support tool where nothing malformed gets in: strict validation, interactive evaluation, full edit history.'
 stack: ['Next.js', 'TypeScript']
 year: '2024'
-order: 3
+order: 4
 demo: 'https://abdousadou.github.io/es_builder_clone/'
 ---
 
