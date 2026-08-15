@@ -3,7 +3,7 @@ title: 'Network Change Registry'
 outcome: 'Traceable, consistent network-change history, feeding the KPI programme that cut external complaints by 15%.'
 stack: ['Oracle', 'SQL', 'Python', 'Power BI']
 year: '2020–2021'
-order: 5
+order: 6
 confidential: true
 ---
 

@@ -3,7 +3,7 @@ title: 'Customer Data 360'
 outcome: 'High-volume customer data made reliable: quality controls and dashboards that sharpened market segmentation.'
 stack: ['Python', 'Spark', 'SQL', 'Power BI']
 year: '2023–present'
-order: 3
+order: 4
 confidential: true
 ---
 
